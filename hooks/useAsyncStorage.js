@@ -25,3 +25,11 @@ export const removeItem = async (key) => {
     console.log(error);
   }
 };
+
+export const clearStorage = async (key) => {
+  try {
+    const value = await AsyncStorage.clear(key);
+  } catch (error) {
+    console.log(error);
+  }
+};

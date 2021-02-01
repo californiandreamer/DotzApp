@@ -1,12 +1,8 @@
-import React from 'react';
-import {View, Text} from 'react-native';
+import React, {useEffect} from 'react';
+import Navigation from './utils/Navigation';
 
 const App = () => {
-  return (
-    <View>
-      <Text>Hello! I am DOTZ app</Text>
-    </View>
-  );
+  return <Navigation />;
 };
 
 export default App;
