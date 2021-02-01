@@ -8,6 +8,7 @@ import Registration from '../screens/Registration/Registration';
 import PrivacyBubble from '../screens/PrivacyBubble/PrivacyBubble';
 import ChooseActivity from '../screens/ChooseActivity/ChooseActivity';
 import Main from '../screens/Main/Main';
+import Profile from '../screens/Profile/Profile';
 
 const Stack = createStackNavigator();
 
@@ -16,6 +17,7 @@ const Drawer = createDrawerNavigator();
 const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
+      initialRouteName="Profile"
       drawerStyle={{backgroundColor: '#141F25'}}
       drawerContentOptions={{
         labelStyle: {
@@ -28,6 +30,7 @@ const DrawerNavigator = () => {
         itemStyle: {marginVertical: 5},
       }}>
       <Drawer.Screen name="Main" component={Main} />
+      <Drawer.Screen name="Profile" component={Profile} />
     </Drawer.Navigator>
   );
 };

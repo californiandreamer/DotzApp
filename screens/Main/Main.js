@@ -276,7 +276,7 @@ const s = StyleSheet.create({
     resizeMode: 'contain',
   },
   addText: {
-    width: 100,
+    width: 60,
     position: 'absolute',
     top: 10,
     left: -60,
