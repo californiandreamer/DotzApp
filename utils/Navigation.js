@@ -17,7 +17,7 @@ const Drawer = createDrawerNavigator();
 const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
-      initialRouteName="Profile"
+      // initialRouteName="Profile"
       drawerStyle={{backgroundColor: '#141F25'}}
       drawerContentOptions={{
         labelStyle: {
@@ -38,7 +38,7 @@ const DrawerNavigator = () => {
 const Navigation = () => (
   <NavigationContainer>
     <Stack.Navigator
-      initialRouteName="Root"
+      initialRouteName="Login"
       screenOptions={{
         headerShown: false,
       }}>

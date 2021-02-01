@@ -9,6 +9,7 @@ const Tab = ({tab1, tab2, action}) => {
   const [containerHalfWidth, setContainerHalfWidth] = useState(300);
 
   const toggleTab = () => {
+    action(activeTab === tab1 ? tab2 : tab1);
     setActiveTab((prev) => (prev === tab1 ? tab2 : tab1));
     if (activeTab === tab1) {
       Animated.timing(tabAnimation, {
@@ -37,14 +38,15 @@ const Tab = ({tab1, tab2, action}) => {
       onLayout={(e) => getContainerWidth(e)}
       onPress={() => {
         toggleTab();
-        action(activeTab);
       }}>
       <Text style={s.text}>{tab1}</Text>
       <Text style={s.text}>{tab2}</Text>
       <Animated.View style={[s.tab, {left: tabAnimation}]}>
-        <View style={s.inner}>
-          <Text style={s.activeText}>{activeTab}</Text>
-        </View>
+        <TouchableOpacity style={s.area} activeOpacity={1}>
+          <View style={s.inner}>
+            <Text style={s.activeText}>{activeTab}</Text>
+          </View>
+        </TouchableOpacity>
       </Animated.View>
     </TouchableOpacity>
   );

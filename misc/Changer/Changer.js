@@ -13,13 +13,13 @@ const Changer = () => {
         </TouchableOpacity>
       </View>
       <View style={s.item}>
-        <TouchableOpacity style={s.inner}>
+        <TouchableOpacity style={s.inner} activeOpacity={0.8}>
           <Image style={s.image} source={testImg} />
           <Text style={s.text}>Hiking</Text>
         </TouchableOpacity>
       </View>
       <View style={s.item}>
-        <TouchableOpacity style={s.inner}>
+        <TouchableOpacity style={s.inner} activeOpacity={0.8}>
           <Image style={s.image} source={testImg} />
           <Text style={s.text}>Skateboard</Text>
         </TouchableOpacity>
@@ -31,19 +31,19 @@ const Changer = () => {
         </TouchableOpacity>
       </View>
       <View style={s.item}>
-        <TouchableOpacity style={s.inner}>
+        <TouchableOpacity style={s.inner} activeOpacity={0.8}>
           <Image style={s.image} source={testImg} />
           <Text style={s.text}>Motor Bike</Text>
         </TouchableOpacity>
       </View>
       <View style={s.item}>
-        <TouchableOpacity style={s.inner}>
+        <TouchableOpacity style={s.inner} activeOpacity={0.8}>
           <Image style={s.image} source={testImg} />
           <Text style={s.text}>Scooter</Text>
         </TouchableOpacity>
       </View>
       <View style={s.item}>
-        <TouchableOpacity style={s.inner}>
+        <TouchableOpacity style={s.inner} activeOpacity={0.8}>
           <Image style={s.image} source={testImg} />
           <Text style={s.text}>Car</Text>
         </TouchableOpacity>
