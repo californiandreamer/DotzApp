@@ -9,6 +9,9 @@ import PrivacyBubble from '../screens/PrivacyBubble/PrivacyBubble';
 import ChooseActivity from '../screens/ChooseActivity/ChooseActivity';
 import Main from '../screens/Main/Main';
 import Profile from '../screens/Profile/Profile';
+import Messages from '../screens/Messages/Messages';
+import Dialog from '../screens/Dialog/Dialog';
+import Friends from '../screens/Friends/Friends';
 
 const Stack = createStackNavigator();
 
@@ -17,20 +20,22 @@ const Drawer = createDrawerNavigator();
 const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
-      // initialRouteName="Profile"
-      drawerStyle={{backgroundColor: '#141F25'}}
+      // initialRouteName="Friends"
+      drawerStyle={{backgroundColor: '#F18303', opacity: 0.9}}
       drawerContentOptions={{
         labelStyle: {
           marginLeft: 10,
           fontFamily: 'Gilroy-SemiBold',
           fontSize: 18,
-          color: '#fff',
+          color: '#141F25',
         },
-        activeBackgroundColor: '#212E36',
+        activeBackgroundColor: '#FAC978',
         itemStyle: {marginVertical: 5},
       }}>
       <Drawer.Screen name="Main" component={Main} />
       <Drawer.Screen name="Profile" component={Profile} />
+      <Drawer.Screen name="Messages" component={Messages} />
+      <Drawer.Screen name="Friends" component={Friends} />
     </Drawer.Navigator>
   );
 };
@@ -49,6 +54,7 @@ const Navigation = () => (
       <Stack.Screen name="ChooseActivity" component={ChooseActivity} />
       <Stack.Screen name="Root" component={DrawerNavigator} />
       <Stack.Screen name="Main" component={Main} />
+      <Stack.Screen name="Dialog" component={Dialog} />
     </Stack.Navigator>
   </NavigationContainer>
 );

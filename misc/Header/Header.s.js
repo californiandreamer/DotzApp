@@ -2,7 +2,7 @@ import {StyleSheet} from 'react-native';
 
 export default StyleSheet.create({
   container: {
-    minHeight: 66,
+    height: 66,
     padding: 16,
     position: 'absolute',
     top: 0,

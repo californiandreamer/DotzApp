@@ -1,0 +1,85 @@
+import {StyleSheet} from 'react-native';
+
+export default StyleSheet.create({
+  container: {
+    width: '100%',
+    height: '100%',
+    padding: 16,
+  },
+  item: {
+    width: '100%',
+    paddingVertical: 10,
+  },
+  topRow: {
+    width: '100%',
+    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  image: {
+    width: 44,
+    height: 44,
+    resizeMode: 'contain',
+    borderRadius: 88,
+    // borderWidth: 2,
+    borderColor: '#141F25',
+  },
+  name: {
+    fontFamily: 'Gilroy-SemiBold',
+    fontSize: 18,
+    color: '#fff',
+  },
+  bottomRow: {
+    width: '100%',
+    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chatButton: {
+    width: '38%',
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FECE03',
+    borderRadius: 10,
+  },
+  confirmButton: {
+    width: '38%',
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#60CC6B',
+    borderRadius: 10,
+  },
+  profileButton: {
+    width: '38%',
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#373E4E',
+    borderRadius: 10,
+  },
+  cancelButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#373E4E',
+    borderRadius: 10,
+    borderColor: '#F18303',
+    borderWidth: 1,
+  },
+  buttonText: {
+    textTransform: 'uppercase',
+    fontFamily: 'Gilroy-SemiBold',
+    fontSize: 16,
+    color: '#fff',
+  },
+  buttonImage: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
+});
