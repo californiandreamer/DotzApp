@@ -1,23 +1,29 @@
 import React from 'react';
 import s from './Button.s';
 import {ImageBackground, Text, TouchableOpacity} from 'react-native';
+import RedFrame from '../../assets/images/red-frame.jpg';
+import GreenFrame from '../../assets/images/green-frame.jpg';
 import VioletFrame from '../../assets/images/violet-frame.jpg';
 import OrangeFrame from '../../assets/images/orange-frame.jpg';
 
-const Button = ({text, style, action}) => {
+const Button = ({text, style, customStyle, imageStyle, action}) => {
   return (
     <TouchableOpacity
-      style={[s.button, {borderWidth: style ? 0 : 2}]}
+      style={[s.button, {borderWidth: style ? 0 : 2}, customStyle]}
       activeOpacity={0.8}
       onPress={action}>
       <ImageBackground
         style={s.background}
-        imageStyle={s.imageStyle}
+        imageStyle={imageStyle || s.imageStyle}
         source={
           style === 'violet'
             ? VioletFrame
             : style === 'orange'
             ? OrangeFrame
+            : style === 'red'
+            ? RedFrame
+            : style === 'green'
+            ? GreenFrame
             : null
         }>
         <Text style={s.text}>{text}</Text>

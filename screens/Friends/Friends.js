@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {ImageBackground, StyleSheet, Text, View} from 'react-native';
 import Header from '../../misc/Header/Header';
 import OrangeGradientImg from '../../assets/images/gradient.jpg';
+import SettingsImg from '../../assets/icons/Ic-Setting.png';
 import FriendsList from '../../misc/FriendsList/FriendsList';
 
 const Friends = () => {
@@ -15,7 +16,7 @@ const Friends = () => {
 
   return (
     <ImageBackground style={s.container} source={OrangeGradientImg}>
-      <Header title={listType} action={toggleListType} />
+      <Header title={listType} icon={SettingsImg} action={toggleListType} />
       <View style={s.wrapper}>
         <FriendsList type={listType} />
       </View>

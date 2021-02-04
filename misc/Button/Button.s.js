@@ -4,7 +4,7 @@ export default StyleSheet.create({
   button: {
     width: '100%',
     height: 56,
-    marginBottom: 16, // ?
+    marginBottom: 16,
     borderRadius: 16,
     backgroundColor: 'transparent',
     borderColor: '#3A454B',

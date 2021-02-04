@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import MapboxGL from '@react-native-mapbox-gl/maps';
+import {useNavigation} from '@react-navigation/native';
 import Tab from '../../misc/Tab/Tab';
 import Header from '../../misc/Header/Header';
 import Button from '../../misc/Button/Button';
@@ -15,12 +16,14 @@ import Changer from '../../misc/Changer/Changer';
 import GradientImg from '../../assets/images/gradient.jpg';
 import AvatarImg from '../../assets/images/girl.jpg';
 import DotImg from '../../assets/icons/ic-likeOn.png';
+import SettingsImg from '../../assets/icons/Ic-Setting.png';
 import LocationImg from '../../assets/icons/ic-Location2.png';
 import {mapBoxToken} from '../../api/api';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
 const Profile = () => {
+  const navigation = useNavigation();
   const tabProps = {
     tab1: 'Main info',
     tab2: 'Feed',
@@ -30,6 +33,10 @@ const Profile = () => {
 
   const getActiveTab = (value) => {
     setActiveTab(value);
+  };
+
+  const stackNavigate = (route) => {
+    navigation.navigate(route);
   };
 
   const renderMainInfo = (
@@ -75,7 +82,11 @@ const Profile = () => {
 
   return (
     <ScrollView style={s.container}>
-      <Header title={'Profile'} />
+      <Header
+        title={'Profile'}
+        icon={SettingsImg}
+        action={() => stackNavigate('Registration')}
+      />
       <Image style={s.background} source={GradientImg} />
       <View style={s.avatar}>
         <Image style={s.avatarImg} source={AvatarImg} />

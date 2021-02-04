@@ -9,6 +9,7 @@ import PlusImg from '../../assets/icons/ic-plus.png';
 import RouteImg from '../../assets/icons/ic-plus1.png';
 import CompassImg from '../../assets/icons/ic-plus2.png';
 import Alert from '../../misc/Alert/Alert';
+import Bar from '../../misc/Bar/Bar';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -181,7 +182,9 @@ const Main = () => {
         attributionEnabled={false}
         logoEnabled={false}>
         <MapboxGL.Camera zoomLevel={12} followUserLocation />
-        <MapboxGL.UserLocation onUpdate={(e) => console.log(e)} />
+        <MapboxGL.UserLocation
+        // onUpdate={(e) => console.log(e)}
+        />
       </MapboxGL.MapView>
       <View style={s.burger}>
         <TouchableOpacity
@@ -192,7 +195,8 @@ const Main = () => {
         </TouchableOpacity>
       </View>
       {openOptions ? <View style={s.mask} /> : null}
-      {renderOptions}
+      {/* {renderOptions} */}
+      <Bar />
       {alertVisible ? <Alert {...alertProps} /> : null}
     </View>
   );
@@ -219,6 +223,8 @@ const s = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+    // position: 'relative',
+    // zIndex: 0,
   },
   burger: {
     width: 50,

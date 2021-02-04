@@ -5,7 +5,7 @@ import ArrowLeftImg from '../../assets/icons/ic-Arrow-Left.png';
 import SettingsImg from '../../assets/icons/Ic-Setting.png';
 import {useNavigation} from '@react-navigation/native';
 
-const Header = ({title, style, action}) => {
+const Header = ({title, style, icon, action}) => {
   const navigation = useNavigation();
 
   const stackGoBack = (route) => {
@@ -29,7 +29,7 @@ const Header = ({title, style, action}) => {
       </Text>
       {action ? (
         <TouchableOpacity style={s.button} activeOpacity={0.8} onPress={action}>
-          <Image style={s.image} source={SettingsImg} />
+          <Image style={s.image} source={icon} />
         </TouchableOpacity>
       ) : (
         <View style={s.button} />
