@@ -12,6 +12,10 @@ import Profile from '../screens/Profile/Profile';
 import Messages from '../screens/Messages/Messages';
 import Dialog from '../screens/Dialog/Dialog';
 import Friends from '../screens/Friends/Friends';
+import Locations from '../screens/Locations/Locations';
+import SavedLocations from '../screens/SavedLocations/SavedLocations';
+import Cities from '../screens/Cities/Cities';
+import Leaderboard from '../screens/Leaderboard/Leaderboard';
 
 const Stack = createStackNavigator();
 
@@ -20,7 +24,7 @@ const Drawer = createDrawerNavigator();
 const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
-      initialRouteName="Main"
+      // initialRouteName="Profile"
       drawerStyle={{backgroundColor: '#F18303', opacity: 0.9}}
       drawerContentOptions={{
         labelStyle: {
@@ -36,6 +40,10 @@ const DrawerNavigator = () => {
       <Drawer.Screen name="Profile" component={Profile} />
       <Drawer.Screen name="Messages" component={Messages} />
       <Drawer.Screen name="Friends" component={Friends} />
+      <Drawer.Screen name="SavedLocations" component={SavedLocations} />
+      <Drawer.Screen name="Locations" component={Locations} />
+      <Drawer.Screen name="Cities" component={Cities} />
+      <Drawer.Screen name="Leaderboard" component={Leaderboard} />
     </Drawer.Navigator>
   );
 };
@@ -43,7 +51,7 @@ const DrawerNavigator = () => {
 const Navigation = () => (
   <NavigationContainer>
     <Stack.Navigator
-      initialRouteName="Root"
+      initialRouteName="Login"
       screenOptions={{
         headerShown: false,
       }}>

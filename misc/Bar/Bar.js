@@ -113,7 +113,7 @@ const Bar = () => {
         <Text style={{color: '#fff', fontSize: 20}}>
           Offset: {defaultOffset}
         </Text> */}
-        <BarStatus />
+        <BarStatus title={'Route name'} />
         <View style={s.wrapper}>
           <View style={s.buttonsRow}>
             <View style={s.item}>

@@ -1,15 +1,23 @@
-import React from 'react';
+import React, {useState} from 'react';
 import s from './Header.s';
 import {View, Text, Image, TouchableOpacity} from 'react-native';
 import ArrowLeftImg from '../../assets/icons/ic-Arrow-Left.png';
-import SettingsImg from '../../assets/icons/Ic-Setting.png';
+// import SettingsImg from '../../assets/icons/Ic-Setting.png';
 import {useNavigation} from '@react-navigation/native';
 
 const Header = ({title, style, icon, action}) => {
+  const [goBackDisabled, setGoBackDisabled] = useState(canGoBack);
+
   const navigation = useNavigation();
 
+  const canGoBack = navigation.canGoBack();
+
   const stackGoBack = (route) => {
-    navigation.goBack(route);
+    if (canGoBack) {
+      navigation.goBack(route);
+    } else {
+      setGoBackDisabled(true);
+    }
   };
 
   return (
@@ -19,7 +27,8 @@ const Header = ({title, style, icon, action}) => {
         {backgroundColor: style === 'orange' ? '#F18303' : 'transparent'},
       ]}>
       <TouchableOpacity
-        style={s.button}
+        style={[s.button, {opacity: canGoBack ? 1 : 0.7}]}
+        disabled={goBackDisabled}
         activeOpacity={0.8}
         onPress={stackGoBack}>
         <Image style={s.image} source={ArrowLeftImg} />
