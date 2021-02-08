@@ -3,13 +3,22 @@ import {StyleSheet, Text, View, Platform, Image, Animated} from 'react-native';
 import {useNavigation, DrawerActions} from '@react-navigation/native';
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {mapBoxToken} from '../../api/api';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import PlusImg from '../../assets/icons/ic-plus.png';
 import RouteImg from '../../assets/icons/ic-plus1.png';
 import CompassImg from '../../assets/icons/ic-plus2.png';
+import BlastPinImg from '../../assets/icons/ic-blast-pin.png';
+import BlastMessageImg from '../../assets/icons/ic-message.png';
+import GirlImg from '../../assets/images/girl.jpg';
+import NextImg from '../../assets/icons/icon-siguiente.png';
 import Alert from '../../misc/Alert/Alert';
 import Bar from '../../misc/Bar/Bar';
+import PopUp from '../../misc/PopUp/PopUp';
+import Button from '../../misc/Button/Button';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -18,6 +27,8 @@ const Main = () => {
 
   const [openOptions, setOpenOptions] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
+  const [popUpVisible, setPopUpVisible] = useState(false);
+  const [popUpProps, setPopUpProps] = useState({});
   const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
   const [alertProps, setAlertProps] = useState({});
 
@@ -123,6 +134,11 @@ const Main = () => {
     });
   };
 
+  const hidePopUp = () => {
+    setPopUpVisible(false);
+    setPopUpProps({});
+  };
+
   const cancelAdding = () => {
     setAlertVisible(false);
   };
@@ -130,6 +146,44 @@ const Main = () => {
   useEffect(() => {
     getUserLocationPermision();
   }, []);
+
+  const renderBurger = (
+    <View style={[s.buttonOuter, {left: 16}]}>
+      <TouchableOpacity
+        style={s.button}
+        activeOpacity={0.8}
+        onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
+        <Image style={s.buttonImg} source={BurgerImg} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderBlastMessageBtn = (
+    <View style={[s.buttonOuter, {right: 16}]}>
+      <TouchableOpacity
+        style={s.button}
+        activeOpacity={0.8}
+        onPress={() => {
+          setPopUpVisible(true);
+          setPopUpProps({
+            title: 'Blast Message',
+            type: 'compose',
+            action1: hidePopUp,
+            action2: hidePopUp,
+          });
+        }}>
+        <Image style={s.buttonImg} source={BlastMessageImg} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderBlastPinBtn = (
+    <View style={[s.buttonOuter, {right: 76}]}>
+      <TouchableOpacity style={s.button} activeOpacity={0.8}>
+        <Image style={s.buttonImg} source={BlastPinImg} />
+      </TouchableOpacity>
+    </View>
+  );
 
   const renderOptions = (
     <View>
@@ -174,6 +228,28 @@ const Main = () => {
     </View>
   );
 
+  const renderPlace = (
+    <MapboxGL.MarkerView
+      key={'test'}
+      id="Test"
+      coordinate={[-118.243683, 34.052235]}>
+      <View style={s.mapPopUp}>
+        <View style={s.mapPopUpInner}>
+          <TouchableOpacity
+            style={s.mapPopUpBtn}
+            activeOpacity={0.8}
+            onPress={() => console.log('Hello!')}>
+            <Image style={s.mapPopUpImg} source={GirlImg} />
+          </TouchableOpacity>
+          <Text style={s.mapPopUpName}>Megan Rain</Text>
+          <TouchableOpacity style={s.nextBtn} activeOpacity={0.8}>
+            <Image style={s.nextImg} source={NextImg} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </MapboxGL.MarkerView>
+  );
+
   return (
     <View style={s.container}>
       <MapboxGL.MapView
@@ -185,19 +261,14 @@ const Main = () => {
         <MapboxGL.UserLocation
         // onUpdate={(e) => console.log(e)}
         />
+        {renderPlace}
       </MapboxGL.MapView>
-      <View style={s.burger}>
-        <TouchableOpacity
-          style={s.burgerBtn}
-          activeOpacity={0.8}
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
-          <Image style={s.burgerImg} source={BurgerImg} />
-        </TouchableOpacity>
-      </View>
-      {openOptions ? <View style={s.mask} /> : null}
-      {/* {renderOptions} */}
-      <Bar />
+      {[renderBurger, renderBlastMessageBtn, renderBlastPinBtn]}
       {alertVisible ? <Alert {...alertProps} /> : null}
+      {openOptions ? <View style={s.mask} /> : null}
+      {popUpVisible ? <PopUp {...popUpProps} /> : null}
+      {renderOptions}
+      {/* <Bar /> */}
     </View>
   );
 };
@@ -223,22 +294,59 @@ const s = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
-    // position: 'relative',
-    // zIndex: 0,
   },
-  burger: {
+  mapPopUp: {
+    width: 100,
+    height: 130,
+  },
+  mapPopUpBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+  },
+  mapPopUpImg: {
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
+    borderRadius: 30,
+  },
+  mapPopUpInner: {
+    width: 100,
+    height: 130,
+    padding: 8,
+    backgroundColor: '#141F25',
+    borderRadius: 16,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  mapPopUpName: {
+    marginVertical: 10,
+    textAlign: 'center',
+    fontFamily: 'Gilroy-SemiBold',
+    fontSize: 12,
+    color: '#fff',
+  },
+  nextBtn: {
+    width: 30,
+    height: 30,
+  },
+  nextImg: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
+  buttonOuter: {
     width: 50,
     height: 50,
     position: 'absolute',
     top: 32,
-    left: 16,
-    zIndex: 1,
+    zIndex: 0,
   },
-  burgerBtn: {
+  button: {
     width: 50,
     height: 50,
   },
-  burgerImg: {
+  buttonImg: {
     width: 50,
     height: 50,
     resizeMode: 'contain',
@@ -282,13 +390,13 @@ const s = StyleSheet.create({
     resizeMode: 'contain',
   },
   addText: {
-    width: 60,
+    width: 70,
     position: 'absolute',
     top: 10,
     left: -60,
     zIndex: 20,
     fontFamily: 'Gilroy-SemiBold',
-    fontSize: 20,
+    fontSize: 18,
     color: '#fff',
   },
 });

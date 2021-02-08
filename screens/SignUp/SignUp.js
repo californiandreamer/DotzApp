@@ -38,8 +38,8 @@ const s = StyleSheet.create({
   },
   logo: {
     width: '100%',
-    maxHeight: 80,
-    marginBottom: 25,
+    height: 70,
+    marginVertical: 25,
     resizeMode: 'contain',
   },
   wrapper: {
@@ -49,7 +49,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Gilroy-SemiBold',
+    fontFamily: 'Atma-SemiBold',
     fontSize: 48,
     color: '#000',
   },

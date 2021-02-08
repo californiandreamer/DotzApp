@@ -12,7 +12,7 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Gilroy-SemiBold',
+    fontFamily: 'Atma-SemiBold',
     fontSize: 28,
     color: '#F0FCFF',
   },

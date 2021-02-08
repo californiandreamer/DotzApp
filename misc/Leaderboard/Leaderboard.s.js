@@ -29,8 +29,16 @@ export default StyleSheet.create({
     backgroundColor: '#999',
     borderRadius: 35,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+  },
+  place: {
+    paddingHorizontal: 15,
+  },
+  placeImg: {
+    width: 32,
+    height: 32,
+    resizeMode: 'contain',
   },
   content: {
     flexDirection: 'row',
@@ -54,14 +62,6 @@ export default StyleSheet.create({
   result: {
     fontFamily: 'Gilroy-Regular',
     fontSize: 14,
-    color: '#040415',
-  },
-  place: {
-    paddingHorizontal: 15,
-  },
-  placeText: {
-    fontFamily: 'Gilroy-SemiBold',
-    fontSize: 30,
     color: '#040415',
   },
 });

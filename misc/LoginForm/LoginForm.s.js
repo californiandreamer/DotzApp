@@ -1,9 +1,13 @@
-import {StyleSheet} from 'react-native';
+import {Dimensions, StyleSheet} from 'react-native';
+
+const innerWidth = Dimensions.get('screen').width;
+const smallScreen = innerWidth < 350;
 
 export default StyleSheet.create({
   form: {
     width: '100%',
     paddingVertical: 10,
+    paddingBottom: 32,
   },
   wrapper: {
     width: '100%',
@@ -27,7 +31,7 @@ export default StyleSheet.create({
     borderColor: '#3A454B',
     borderRadius: 16,
     fontFamily: 'Gilroy-SemiBold',
-    fontSize: 18,
+    fontSize: smallScreen ? 14 : 18,
     color: '#000',
   },
   text: {

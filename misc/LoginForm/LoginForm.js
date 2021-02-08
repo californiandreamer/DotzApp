@@ -33,7 +33,7 @@ const LoginForm = () => {
           onPress={() => stackNavigate('SignUp')}
           activeOpacity={0.5}>
           <Text style={s.text}>
-            Already have the account? Just{' '}
+            Already have an account? {''}
             <Text style={s.textBold}>Sign Up</Text>
           </Text>
         </TouchableOpacity>

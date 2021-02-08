@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Dimensions, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../misc/Button/Button';
 import Changer from '../../misc/Changer/Changer';
@@ -35,28 +35,31 @@ const ChooseActivity = () => {
 
 export default ChooseActivity;
 
+const innerWidth = Dimensions.get('screen').width;
+const smallScreen = innerWidth < 350;
+
 const s = StyleSheet.create({
   container: {
     width: '100%',
     height: '100%',
     paddingHorizontal: 16,
-    paddingVertical: 32,
     backgroundColor: '#141F25',
   },
   wrapper: {
     paddingVertical: 10,
   },
   title: {
+    marginTop: 16,
     fontFamily: 'Gilroy-Regular',
     textTransform: 'uppercase',
-    fontSize: 18,
+    fontSize: smallScreen ? 14 : 18,
     color: '#F0FCFF',
   },
   text: {
     width: '80%',
     fontFamily: 'Gilroy-SemiBold',
     textTransform: 'uppercase',
-    fontSize: 28,
+    fontSize: smallScreen ? 22 : 28,
     lineHeight: 35,
     color: '#F0FCFF',
   },

@@ -4,6 +4,7 @@ export default StyleSheet.create({
   form: {
     width: '100%',
     paddingVertical: 10,
+    paddingBottom: 32,
   },
   wrapper: {
     width: '100%',

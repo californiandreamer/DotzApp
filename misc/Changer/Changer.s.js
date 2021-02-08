@@ -1,4 +1,7 @@
-import {StyleSheet} from 'react-native';
+import {Dimensions, StyleSheet} from 'react-native';
+
+const innerWidth = Dimensions.get('screen').width;
+const smallScreen = innerWidth < 350;
 
 export default StyleSheet.create({
   container: {
@@ -41,7 +44,7 @@ export default StyleSheet.create({
   text: {
     width: '80%',
     fontFamily: 'Gilroy-SemiBold',
-    fontSize: 18,
+    fontSize: smallScreen ? 14 : 18,
     color: '#F0FCFF',
   },
 });

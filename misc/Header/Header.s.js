@@ -20,10 +20,28 @@ export default StyleSheet.create({
   image: {
     width: 30,
     height: 30,
+    resizeMode: 'contain',
   },
   title: {
     fontFamily: 'Gilroy-SemiBold',
     fontSize: 24,
+    color: '#fff',
+  },
+  quantity: {
+    width: 16,
+    height: 16,
+    backgroundColor: '#FF0000',
+    borderRadius: 16,
+    position: 'absolute',
+    left: -5,
+    bottom: -5,
+    zIndex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityText: {
+    fontFamily: 'Gilroy-SemiBold',
+    fontSize: 9,
     color: '#fff',
   },
 });

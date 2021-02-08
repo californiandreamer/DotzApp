@@ -28,11 +28,11 @@ const SignUpForm = () => {
         />
       </View>
       <View style={s.wrapper}>
-        <Text style={s.title}>Your Password</Text>
+        <Text style={s.title}>Your password</Text>
         <TextInput style={s.input} textContentType="password" secureTextEntry />
       </View>
       <View style={s.wrapper}>
-        <Text style={s.title}>Submit Your Password</Text>
+        <Text style={s.title}>Re-enter your password</Text>
         <TextInput style={s.input} textContentType="password" secureTextEntry />
       </View>
       <View style={s.termsWrapper}>

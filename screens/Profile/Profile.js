@@ -16,6 +16,8 @@ import Changer from '../../misc/Changer/Changer';
 import GradientImg from '../../assets/images/gradient.jpg';
 import AvatarImg from '../../assets/images/girl.jpg';
 import DotImg from '../../assets/icons/ic-likeOn.png';
+import DistanceImg from '../../assets/icons/ic-distance.png';
+import PersonImg from '../../assets/icons/Ic-Profile.png';
 import SettingsImg from '../../assets/icons/Ic-Setting.png';
 import LocationImg from '../../assets/icons/ic-Location2.png';
 import {mapBoxToken} from '../../api/api';
@@ -45,11 +47,13 @@ const Profile = () => {
       <Changer />
       <Text style={s.title}>All activities</Text>
       <Changer />
-      <View style={s.wrapper}>
+      <View style={s.rowStartWrapper}>
         <Text style={s.text}>Miles since registration: 14</Text>
+        <Image style={s.image} source={DistanceImg} />
       </View>
-      <View style={s.wrapper}>
+      <View style={s.rowStartWrapper}>
         <Text style={s.text}>Largest rideout: 21</Text>
+        <Image style={s.image} source={PersonImg} />
       </View>
     </View>
   );
@@ -134,6 +138,13 @@ const s = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
+  rowStartWrapper: {
+    width: '100%',
+    paddingVertical: 10,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
   background: {
     height: 180,
     position: 'absolute',
@@ -187,15 +198,21 @@ const s = StyleSheet.create({
   },
   title: {
     width: '100%',
-    fontFamily: 'Gilroy-SemiBold',
+    fontFamily: 'Atma-SemiBold',
     fontSize: 24,
     color: '#fff',
   },
   text: {
-    width: '100%',
+    textAlign: 'left',
     fontSize: 18,
-    fontFamily: 'Gilroy-Regular',
+    fontFamily: 'Gilroy-SemiBold',
     color: '#fff',
+  },
+  image: {
+    width: 25,
+    height: 25,
+    marginHorizontal: 10,
+    resizeMode: 'contain',
   },
   map: {
     width: '100%',
