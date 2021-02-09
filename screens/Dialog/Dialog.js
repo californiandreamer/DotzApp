@@ -61,7 +61,7 @@ const s = StyleSheet.create({
     padding: 16,
     backgroundColor: '#fff',
     borderRadius: 8,
-    borderBottomLeftRadius: 0,
+    // borderBottomLeftRadius: 0,
   },
   inputArea: {
     height: 50,

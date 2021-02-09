@@ -109,9 +109,9 @@ const Profile = () => {
         <View style={s.wrapper}>
           {activeTab === tabProps.tab1 ? renderMainInfo : renderFeed}
         </View>
-        <View style={s.wrapper}>
+        {/* <View style={s.wrapper}>
           <Button text={'Add to friends'} style={'orange'} />
-        </View>
+        </View> */}
       </View>
     </ScrollView>
   );

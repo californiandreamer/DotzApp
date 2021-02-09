@@ -44,4 +44,9 @@ export const activities = [
     name: 'Rollerskate',
     image: require('./assets/icons/activities/rollerskate.png'),
   },
+  {
+    id: 10,
+    name: 'Snowboarding',
+    image: require('./assets/icons/activities/snowboarding.png'),
+  },
 ];

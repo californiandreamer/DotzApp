@@ -44,7 +44,7 @@ export default StyleSheet.create({
   text: {
     width: '80%',
     fontFamily: 'Gilroy-SemiBold',
-    fontSize: smallScreen ? 14 : 18,
+    fontSize: smallScreen ? 12 : 14,
     color: '#F0FCFF',
   },
 });

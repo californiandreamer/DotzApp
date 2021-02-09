@@ -14,7 +14,7 @@ const ChooseActivity = () => {
   return (
     <ScrollView style={s.container}>
       <View style={s.wrapper}>
-        <Text style={s.title}>Welcome Devon!</Text>
+        <Text style={s.title}>Welcome!</Text>
       </View>
       <View style={s.wrapper}>
         <Text style={s.text}>Choose your current activity</Text>

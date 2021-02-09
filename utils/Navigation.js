@@ -1,4 +1,5 @@
 import React from 'react';
+import {Image, Text} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createDrawerNavigator} from '@react-navigation/drawer';
@@ -16,19 +17,30 @@ import Locations from '../screens/Locations/Locations';
 import SavedLocations from '../screens/SavedLocations/SavedLocations';
 import Cities from '../screens/Cities/Cities';
 import Leaderboard from '../screens/Leaderboard/Leaderboard';
+import MessageIcon from '../assets/icons/Ic-Message2.png';
+import PersonIcon from '../assets/icons/Ic-Profile-menu.png';
+import FriendsIcon from '../assets/icons/Ic-User.png';
+import SavedIcon from '../assets/icons/Ic-Star.png';
+import LocationIcon from '../assets/icons/ic-Location-menu.png';
+import Logo from '../assets/images/logo.png';
 
 const Stack = createStackNavigator();
 
 const Drawer = createDrawerNavigator();
 
 const DrawerNavigator = () => {
+  const iconStyle = {
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
+  };
+
   return (
     <Drawer.Navigator
-      // initialRouteName="Main"
+      initialRouteName="Main"
       drawerStyle={{backgroundColor: '#F18303', opacity: 0.9}}
       drawerContentOptions={{
         labelStyle: {
-          marginLeft: 10,
           fontFamily: 'Gilroy-SemiBold',
           fontSize: 18,
           color: '#141F25',
@@ -36,12 +48,47 @@ const DrawerNavigator = () => {
         activeBackgroundColor: '#FAC978',
         itemStyle: {marginVertical: 5},
       }}>
+      <Drawer.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          drawerLabel: 'My profile',
+          drawerIcon: () => <Image style={iconStyle} source={PersonIcon} />,
+        }}
+      />
+      <Drawer.Screen
+        name="Messages"
+        component={Messages}
+        options={{
+          drawerLabel: 'Messages',
+          drawerIcon: () => <Image style={iconStyle} source={MessageIcon} />,
+        }}
+      />
+      <Drawer.Screen
+        name="Friends"
+        component={Friends}
+        options={{
+          drawerLabel: 'Friends',
+          drawerIcon: () => <Image style={iconStyle} source={FriendsIcon} />,
+        }}
+      />
+      <Drawer.Screen
+        name="Locations"
+        component={Locations}
+        options={{
+          drawerLabel: 'Locations',
+          drawerIcon: () => <Image style={iconStyle} source={LocationIcon} />,
+        }}
+      />
+      <Drawer.Screen
+        name="SavedLocations"
+        component={SavedLocations}
+        options={{
+          drawerLabel: 'Saved',
+          drawerIcon: () => <Image style={iconStyle} source={SavedIcon} />,
+        }}
+      />
       <Drawer.Screen name="Main" component={Main} />
-      <Drawer.Screen name="Profile" component={Profile} />
-      <Drawer.Screen name="Messages" component={Messages} />
-      <Drawer.Screen name="Friends" component={Friends} />
-      <Drawer.Screen name="SavedLocations" component={SavedLocations} />
-      <Drawer.Screen name="Locations" component={Locations} />
       <Drawer.Screen name="Cities" component={Cities} />
       <Drawer.Screen name="Leaderboard" component={Leaderboard} />
     </Drawer.Navigator>
@@ -51,7 +98,7 @@ const DrawerNavigator = () => {
 const Navigation = () => (
   <NavigationContainer>
     <Stack.Navigator
-      initialRouteName="Login"
+      initialRouteName="Root"
       screenOptions={{
         headerShown: false,
       }}>

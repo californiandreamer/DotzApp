@@ -19,7 +19,7 @@ export default StyleSheet.create({
   item: {
     width: '100%',
     paddingVertical: 20,
-    borderBottomColor: '#F18303',
+    borderBottomColor: '#3A454B',
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',

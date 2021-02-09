@@ -241,8 +241,11 @@ const Main = () => {
             onPress={() => console.log('Hello!')}>
             <Image style={s.mapPopUpImg} source={GirlImg} />
           </TouchableOpacity>
-          <Text style={s.mapPopUpName}>Megan Rain</Text>
-          <TouchableOpacity style={s.nextBtn} activeOpacity={0.8}>
+          <Text style={s.mapPopUpName}>John Doe</Text>
+          <TouchableOpacity
+            style={s.nextBtn}
+            activeOpacity={0.8}
+            onPress={() => stackNavigate('Profile')}>
             <Image style={s.nextImg} source={NextImg} />
           </TouchableOpacity>
         </View>
@@ -266,8 +269,8 @@ const Main = () => {
       {[renderBurger, renderBlastMessageBtn, renderBlastPinBtn]}
       {alertVisible ? <Alert {...alertProps} /> : null}
       {openOptions ? <View style={s.mask} /> : null}
-      {popUpVisible ? <PopUp {...popUpProps} /> : null}
-      {renderOptions}
+      {popUpVisible ? <PopUp {...popUpProps} /> : renderOptions}
+      {/* {renderOptions} */}
       {/* <Bar /> */}
     </View>
   );
@@ -308,7 +311,7 @@ const s = StyleSheet.create({
     width: 50,
     height: 50,
     resizeMode: 'contain',
-    borderRadius: 30,
+    borderRadius: 50,
   },
   mapPopUpInner: {
     width: 100,

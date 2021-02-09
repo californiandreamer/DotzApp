@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,9 +9,14 @@ import {
   ScrollView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {launchImageLibrary} from 'react-native-image-picker';
 import EditImg from '../../assets/icons/ic-edit.png';
 import Button from '../../misc/Button/Button';
 import Selector from '../../misc/Selector/Selector';
+import axios from 'axios';
+import GirlImg from '../../assets/images/girl.jpg';
+import {headers, url} from '../../api/api';
+import {activities} from '../../data';
 
 const Registration = () => {
   const navigation = useNavigation();
@@ -20,11 +25,82 @@ const Registration = () => {
     navigation.navigate(route);
   };
 
+  const [filePath, setFilePath] = useState({});
+  console.log('filePath', filePath);
+
+  const chooseFile = () => {
+    let options = {
+      mediaType: 'photo',
+      maxWidth: 1000,
+      maxHeight: 1000,
+      quality: 1,
+      includeBase64: true,
+    };
+    launchImageLibrary(options, (response) => {
+      if (response.didCancel) {
+        console.log('didCancel');
+        return;
+      } else if (response.errorCode === 'camera_unavailable') {
+        console.log('errorChoose');
+        return;
+      } else if (response.errorCode === 'permission') {
+        console.log('errorChoose');
+        return;
+      } else if (response.errorCode === 'others') {
+        console.log('errorChoose');
+        return;
+      }
+      setFilePath(response);
+    });
+  };
+
+  const testRequest = async () => {
+    const testImage = activities[0].image;
+    let postData = new FormData();
+    postData.append('email', 'test3@nazar.com');
+    postData.append('password', '12345678');
+    postData.append('name', 'Nazar Test');
+    postData.append('scope', 'app');
+    postData.append('profile_img_ava', {
+      uri: filePath.uri,
+      name: filePath.fileName,
+      type: filePath.type,
+    });
+    postData.append('profile_city', 'Warsaw');
+    console.log('postData', postData);
+
+    // return fetch(url, {
+    //   method: 'POST',
+    //   body: postData,
+    //   headers: {
+    //     Authorization:
+    //       'Basic WlB3Y0diRkdGRmpNWjM0aENNNHI0WEV5QUw4U0NMOjd3UDRqZT1OZVIzJnpKYUp6MyMzNSNiSFo/VUErZ1AtOEVHSGNQVC0=',
+    //     'Content-Type': 'multipart/form-data',
+    //   },
+    // }).then((res) => console.log('res', res));
+
+    const request = await axios
+      .post(
+        'http://admin.officialdotzapp.com/api/appuser/register',
+        {postData},
+        {
+          Authorization:
+            'Basic WlB3Y0diRkdGRmpNWjM0aENNNHI0WEV5QUw4U0NMOjd3UDRqZT1OZVIzJnpKYUp6MyMzNSNiSFo/VUErZ1AtOEVHSGNQVC0=',
+          'Content-Type': 'multipart/form-data',
+        },
+      )
+      .then((res) => console.log('res', res))
+      .catch((error) => console.log('error', error));
+  };
+
   return (
     <ScrollView style={s.container}>
       <View style={s.wrapper}>
         <View style={s.avatar}>
-          <TouchableOpacity style={s.editAvatarBtn} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={s.editAvatarBtn}
+            activeOpacity={0.8}
+            onPress={chooseFile}>
             <Image style={s.editAvatarImg} source={EditImg} />
           </TouchableOpacity>
         </View>
@@ -48,6 +124,7 @@ const Registration = () => {
             text={'Continue'}
             style={'orange'}
             action={() => stackNavigate('PrivacyBubble')}
+            // action={() => testRequest()}
           />
         </View>
       </View>

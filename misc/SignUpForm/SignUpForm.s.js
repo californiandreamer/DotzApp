@@ -35,11 +35,12 @@ export default StyleSheet.create({
     width: '100%',
     paddingVertical: 24,
     flexDirection: 'row',
+    alignItems: 'center',
   },
-  checkBox: {
-    width: 40,
-    height: 40,
-    padding: 5,
+  checkBoxImg: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
   },
   termsText: {
     width: '80%',
