@@ -6,7 +6,7 @@ export default StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     padding: 16,
-    zIndex: 10,
+    zIndex: 120,
   },
   inner: {
     padding: 20,

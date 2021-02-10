@@ -13,7 +13,7 @@ import NextImg from '../../assets/icons/icon-siguiente.png';
 import CloseImg from '../../assets/icons/ic-close2.png';
 
 const Alert = ({title, text, type, action1, action2, closeAction}) => {
-  const animationVal = useRef(new Animated.Value(-200)).current;
+  const animationVal = useRef(new Animated.Value(-500)).current;
 
   const showAlert = () => {
     Animated.timing(animationVal, {
@@ -25,11 +25,63 @@ const Alert = ({title, text, type, action1, action2, closeAction}) => {
 
   const hideAlert = () => {
     Animated.timing(animationVal, {
-      toValue: -2000,
+      toValue: -500,
       duration: 500,
       useNativeDriver: false,
     }).start();
+    closeAction();
   };
+
+  const typeHandler = () => {
+    switch (type) {
+      case 'next':
+        return (
+          <View style={s.wrapper}>
+            <TouchableOpacity
+              style={s.nextBtn}
+              activeOpacity={0.8}
+              onPress={action1}>
+              <Image style={s.nextImg} source={NextImg} />
+            </TouchableOpacity>
+          </View>
+        );
+        break;
+
+      case 'choice':
+        return (
+          <View style={s.wrapper}>
+            <Button text={'Close'} action={action1} />
+            <Button text={'Next'} style={'orange'} action={action2} />
+          </View>
+        );
+        break;
+
+      case 'input':
+        return (
+          <View style={s.wrapper}>
+            <TextInput style={s.input} />
+            <Button text={'Next'} style={'orange'} action={action1} />
+          </View>
+        );
+        break;
+
+      case 'error':
+        return (
+          <View style={s.wrapper}>
+            <Button
+              text={'Close'}
+              customStyle={{marginBottom: 0}}
+              action={hideAlert}
+            />
+          </View>
+        );
+      default:
+        return null;
+        break;
+    }
+  };
+
+  const content = typeHandler();
 
   useEffect(() => {
     showAlert();
@@ -52,26 +104,7 @@ const Alert = ({title, text, type, action1, action2, closeAction}) => {
         <View style={s.wrapper}>
           <Text style={s.text}>{text}</Text>
         </View>
-        {type === 'next' ? (
-          <View style={s.wrapper}>
-            <TouchableOpacity
-              style={s.nextBtn}
-              activeOpacity={0.8}
-              onPress={action1}>
-              <Image style={s.nextImg} source={NextImg} />
-            </TouchableOpacity>
-          </View>
-        ) : type === 'choice' ? (
-          <View style={s.wrapper}>
-            <Button text={'Close'} action={action1} />
-            <Button text={'Next'} style={'orange'} action={action2} />
-          </View>
-        ) : type === 'input' ? (
-          <View style={s.wrapper}>
-            <TextInput style={s.input} />
-            <Button text={'Next'} style={'orange'} action={action1} />
-          </View>
-        ) : null}
+        {content}
       </View>
     </Animated.View>
   );

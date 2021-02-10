@@ -97,7 +97,7 @@ const Profile = () => {
       </View>
       <View style={s.content}>
         <View style={s.wrapper}>
-          <Text style={s.name}>Megan Rain</Text>
+          <Text style={s.name}>John Doe</Text>
         </View>
         <View style={s.rowWrapper}>
           <Image style={s.locationImg} source={LocationImg} />

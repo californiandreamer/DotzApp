@@ -26,6 +26,7 @@ const Main = () => {
   const navigation = useNavigation();
 
   const [openOptions, setOpenOptions] = useState(false);
+  const [barVisible, setBarVisible] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [popUpVisible, setPopUpVisible] = useState(false);
   const [popUpProps, setPopUpProps] = useState({});
@@ -179,7 +180,10 @@ const Main = () => {
 
   const renderBlastPinBtn = (
     <View style={[s.buttonOuter, {right: 76}]}>
-      <TouchableOpacity style={s.button} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={s.button}
+        activeOpacity={0.8}
+        onPress={() => setBarVisible((prev) => !prev)}>
         <Image style={s.buttonImg} source={BlastPinImg} />
       </TouchableOpacity>
     </View>
@@ -267,11 +271,11 @@ const Main = () => {
         {renderPlace}
       </MapboxGL.MapView>
       {[renderBurger, renderBlastMessageBtn, renderBlastPinBtn]}
-      {alertVisible ? <Alert {...alertProps} /> : null}
       {openOptions ? <View style={s.mask} /> : null}
-      {popUpVisible ? <PopUp {...popUpProps} /> : renderOptions}
-      {/* {renderOptions} */}
-      {/* <Bar /> */}
+      {renderOptions}
+      {alertVisible ? <Alert {...alertProps} /> : null}
+      {popUpVisible ? <PopUp {...popUpProps} /> : null}
+      {barVisible ? <Bar /> : null}
     </View>
   );
 };

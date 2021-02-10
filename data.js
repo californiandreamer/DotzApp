@@ -50,3 +50,22 @@ export const activities = [
     image: require('./assets/icons/activities/snowboarding.png'),
   },
 ];
+
+export const errorsContent = {
+  invalidEmail: {
+    title: 'Email error',
+    text: 'Your email is invalid',
+  },
+  invalidPassword: {
+    title: 'Password error',
+    text: 'Your password have to contain at least 8 symbols',
+  },
+  invalidCheckPassword: {
+    title: 'Password error',
+    text: 'Passwords do not match',
+  },
+  termsUnaccepted: {
+    title: 'Is necessary to proceed',
+    text: 'Need to accept the Terms of Service',
+  },
+};

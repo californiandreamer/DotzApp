@@ -6,7 +6,8 @@ export default StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     paddingHorizontal: 16,
-    paddingBottom: 32,
+    paddingBottom: 16,
+    zIndex: 120,
   },
   inner: {
     padding: 20,
@@ -19,7 +20,7 @@ export default StyleSheet.create({
     position: 'absolute',
     top: 15,
     right: 15,
-    zIndex: 1,
+    zIndex: 121,
   },
   closeImg: {
     width: 25,

@@ -1,4 +1,5 @@
-import React from 'react';
+import {useNavigation} from '@react-navigation/native';
+import React, {useState} from 'react';
 import {
   Image,
   ImageBackground,
@@ -9,9 +10,37 @@ import {
 } from 'react-native';
 import BackgroundImage from '../../assets/images/gradient.jpg';
 import Logo from '../../assets/images/logo.png';
+import Alert from '../../misc/Alert/Alert';
 import SignUpForm from '../../misc/SignUpForm/SignUpForm';
 
 const SignUp = () => {
+  const [error, setError] = useState({
+    isVisible: false,
+    title: '',
+    text: '',
+  });
+
+  const navigation = useNavigation();
+
+  const stackNavigate = (route, params) => {
+    navigation.navigate(route, params);
+  };
+
+  const hideAlert = () => {
+    setTimeout(() => {
+      setError({isVisible: false, title: '', text: ''});
+    }, 500);
+  };
+
+  const renderAlert = error.isVisible ? (
+    <Alert
+      title={error.title}
+      text={error.text}
+      type="error"
+      closeAction={hideAlert}
+    />
+  ) : null;
+
   return (
     <ImageBackground style={s.background} source={BackgroundImage}>
       <ScrollView style={s.container}>
@@ -19,8 +48,14 @@ const SignUp = () => {
         <View style={s.wrapper}>
           <Text style={s.title}>Sign Up</Text>
         </View>
-        <SignUpForm />
+        <SignUpForm
+          action={(params) => stackNavigate('Registration', params)}
+          onError={(title, text) => {
+            setError({isVisible: true, title, text});
+          }}
+        />
       </ScrollView>
+      {renderAlert}
     </ImageBackground>
   );
 };

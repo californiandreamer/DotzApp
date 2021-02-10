@@ -98,7 +98,7 @@ const DrawerNavigator = () => {
 const Navigation = () => (
   <NavigationContainer>
     <Stack.Navigator
-      initialRouteName="Root"
+      initialRouteName="SignUp"
       screenOptions={{
         headerShown: false,
       }}>

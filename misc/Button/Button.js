@@ -6,14 +6,15 @@ import GreenFrame from '../../assets/images/green-frame.jpg';
 import VioletFrame from '../../assets/images/violet-frame.jpg';
 import OrangeFrame from '../../assets/images/orange-frame.jpg';
 
-const Button = ({text, style, customStyle, imageStyle, action}) => {
+const Button = ({text, style, isDisabled, customStyle, imageStyle, action}) => {
   return (
     <TouchableOpacity
       style={[s.button, {borderWidth: style ? 0 : 2}, customStyle]}
       activeOpacity={0.8}
+      disabled={isDisabled}
       onPress={action}>
       <ImageBackground
-        style={s.background}
+        style={[s.background, {opacity: isDisabled ? 0.8 : 1}]}
         imageStyle={imageStyle || s.imageStyle}
         source={
           style === 'violet'

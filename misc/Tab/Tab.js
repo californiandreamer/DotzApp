@@ -14,14 +14,14 @@ const Tab = ({tab1, tab2, action}) => {
     if (activeTab === tab1) {
       Animated.timing(tabAnimation, {
         toValue: containerHalfWidth,
-        duration: 400,
-        useNativeDriver: true,
+        duration: 100,
+        useNativeDriver: false,
       }).start();
     } else {
       Animated.timing(tabAnimation, {
         toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
+        duration: 100,
+        useNativeDriver: false,
       }).start();
     }
   };
@@ -41,8 +41,8 @@ const Tab = ({tab1, tab2, action}) => {
       }}>
       <Text style={s.text}>{tab1}</Text>
       <Text style={s.text}>{tab2}</Text>
-      {/* <Animated.View style={[s.tab, {left: tabAnimation}]}> */}
-      <Animated.View style={[s.tab, {transform: [{translateX: tabAnimation}]}]}>
+      <Animated.View style={[s.tab, {left: tabAnimation}]}>
+        {/* <Animated.View style={[s.tab, {transform: [{translateX: tabAnimation}]}]}> */}
         <TouchableOpacity style={s.area} activeOpacity={1}>
           <View style={s.inner}>
             <Text style={s.activeText}>{activeTab}</Text>

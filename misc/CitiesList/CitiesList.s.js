@@ -14,7 +14,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderColor: '#F18303',
+    borderColor: '#3A454B',
     borderWidth: 2,
     borderTopWidth: 0,
   },
