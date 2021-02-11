@@ -68,4 +68,16 @@ export const errorsContent = {
     title: 'Is necessary to proceed',
     text: 'Need to accept the Terms of Service',
   },
+  invalidName: {
+    title: 'User name error',
+    text: 'Nickname is required and must contain at least 3 symbols',
+  },
+  invalidCity: {
+    title: 'City error',
+    text: 'City is required',
+  },
+  invalidActivities: {
+    title: 'Activities error',
+    text: 'Choose at least one activity',
+  },
 };

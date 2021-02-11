@@ -59,4 +59,13 @@ export default StyleSheet.create({
     width: 56,
     height: 56,
   },
+  text: {
+    width: '100%',
+    fontFamily: 'Gilroy-Regular',
+    fontSize: 14,
+  },
+  textBold: {
+    fontFamily: 'Gilroy-SemiBold',
+    fontSize: 14,
+  },
 });

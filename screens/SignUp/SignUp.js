@@ -43,19 +43,19 @@ const SignUp = () => {
 
   return (
     <ImageBackground style={s.background} source={BackgroundImage}>
+      {renderAlert}
       <ScrollView style={s.container}>
         <Image style={s.logo} source={Logo} />
         <View style={s.wrapper}>
           <Text style={s.title}>Sign Up</Text>
         </View>
         <SignUpForm
-          action={(params) => stackNavigate('Registration', params)}
+          action={(route, params) => stackNavigate(route, params)}
           onError={(title, text) => {
             setError({isVisible: true, title, text});
           }}
         />
       </ScrollView>
-      {renderAlert}
     </ImageBackground>
   );
 };

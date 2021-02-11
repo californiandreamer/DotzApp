@@ -4,10 +4,8 @@ import {View, Text, Image, TouchableOpacity, TextInput} from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
 import EditImg from '../../assets/icons/ic-edit.png';
 
-const RegistrationForm = ({onNameChange, onCityChange}) => {
+const RegistrationForm = ({onNameChange, onCityChange, onImageLoaded}) => {
   const [uploadedImage, setUploadedImage] = useState({});
-  const [nameValue, setNameValue] = useState('');
-  const [cityValue, setCityValue] = useState('');
 
   const chooseFile = () => {
     let options = {
@@ -32,6 +30,7 @@ const RegistrationForm = ({onNameChange, onCityChange}) => {
         return;
       }
       setUploadedImage(response);
+      onImageLoaded(response);
     });
   };
 

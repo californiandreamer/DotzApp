@@ -1,10 +1,10 @@
 import React, {useState} from 'react';
 import s from './SignUpForm.s';
-import {errorsContent} from '../../data';
 import {Image, Text, View} from 'react-native';
 import {TextInput, TouchableOpacity} from 'react-native-gesture-handler';
-import Button from '../Button/Button';
 import CheckBox from 'react-native-check-box'; // need to delete libary
+import {errorsContent} from '../../data';
+import Button from '../Button/Button';
 import GoogleImg from '../../assets/icons/ic-google.png';
 import CheckBoxOnImg from '../../assets/icons/ic-checkOn.png';
 import CheckBoxOffImg from '../../assets/icons/ic-checkOff.png';
@@ -46,7 +46,7 @@ const SignUpForm = ({action, onError}) => {
       if (isPasswordValid) {
         if (isCheckPasswordValid) {
           if (isTermsAccepted) {
-            action({
+            action('Registration', {
               email: emailValue,
               password: passwordValue,
             });
@@ -131,17 +131,19 @@ const SignUpForm = ({action, onError}) => {
         </Text>
       </View>
       <View style={s.wrapper}>
-        <Button
-          text={'Register'}
-          style={'violet'}
-          action={() => {
-            checkInputs();
-          }}
-        />
+        <Button text={'Register'} style={'violet'} action={checkInputs} />
       </View>
       <View style={s.wrapper}>
         <TouchableOpacity style={s.googleBtn} activeOpacity={0.8}>
           <Image style={s.googleImg} source={GoogleImg} />
+        </TouchableOpacity>
+      </View>
+      <View style={s.wrapper}>
+        <TouchableOpacity onPress={() => action('Login')} activeOpacity={0.8}>
+          <Text style={s.text}>
+            Already have an account? {''}
+            <Text style={s.textBold}>Sign Up</Text>
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

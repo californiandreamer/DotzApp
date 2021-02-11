@@ -22,7 +22,6 @@ import PersonIcon from '../assets/icons/Ic-Profile-menu.png';
 import FriendsIcon from '../assets/icons/Ic-User.png';
 import SavedIcon from '../assets/icons/Ic-Star.png';
 import LocationIcon from '../assets/icons/ic-Location-menu.png';
-import Logo from '../assets/images/logo.png';
 
 const Stack = createStackNavigator();
 
@@ -98,7 +97,7 @@ const DrawerNavigator = () => {
 const Navigation = () => (
   <NavigationContainer>
     <Stack.Navigator
-      initialRouteName="SignUp"
+      initialRouteName="Login"
       screenOptions={{
         headerShown: false,
       }}>

@@ -1,100 +1,167 @@
-import React, {useState} from 'react';
+import React, {Fragment, useEffect, useState} from 'react';
 import {StyleSheet, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import axios from 'axios';
+import {errorsContent} from '../../data';
+import {headersFormData, url, headersUserToken} from '../../api/api';
 import Button from '../../misc/Button/Button';
 import Selector from '../../misc/Selector/Selector';
-import axios from 'axios';
-import {headersFormData, url, headersUserToken} from '../../api/api';
 import RegistrationForm from '../../misc/RegistrationForm/RegistrationForm';
-import {onChange} from 'react-native-reanimated';
+import Alert from '../../misc/Alert/Alert';
+import LoadingGif from '../../assets/icons/loading.gif';
 
 const Registration = ({route}) => {
-  console.log('navParams', route.params.email);
-
+  const [error, setError] = useState({
+    isVisible: false,
+    title: '',
+    text: '',
+  });
   const [nameValue, setNameValue] = useState('');
   const [cityValue, setCityValue] = useState('');
-
-  console.log('nameValue', nameValue);
-  console.log('cityValue', cityValue);
+  const [uploadedImage, setUploadedImage] = useState({});
+  const [selectedActivities, setSelectedActivities] = useState([]);
+  const [activitiesData, setActivitiesData] = useState([
+    {
+      activity_id: 0,
+      activity_name: 'Activities list is loading',
+      activity_img: LoadingGif,
+    },
+  ]);
 
   const path = 'appuser/register';
   const navigation = useNavigation();
 
-  const stackNavigate = (route) => {
-    navigation.navigate(route);
+  const checkInputs = () => {
+    if (nameValue.length > 3) {
+      if (cityValue.length > 0) {
+        if (selectedActivities.length !== 0) {
+          registrationRequest();
+        } else {
+          setError({
+            isVisible: true,
+            title: errorsContent.invalidActivities.title,
+            text: errorsContent.invalidActivities.text,
+          });
+        }
+      } else {
+        setError({
+          isVisible: true,
+          title: errorsContent.invalidCity.title,
+          text: errorsContent.invalidCity.text,
+        });
+      }
+    } else {
+      setError({
+        isVisible: true,
+        title: errorsContent.invalidName.title,
+        text: errorsContent.invalidName.text,
+      });
+    }
   };
 
-  const testRequestRegistration = async () => {
+  const registrationRequest = async () => {
     const email = route.params.email;
     const password = route.params.password;
+    const stringedActivities = JSON.stringify(selectedActivities);
 
     let postData = new FormData();
-    postData.append('email', 'test12@nazar.com');
-    postData.append('password', '12345678');
-    postData.append('name', 'Nazar Test');
+    postData.append('email', email);
+    postData.append('password', password);
+    postData.append('name', nameValue);
+    postData.append('profile_city', cityValue);
+    postData.append('activities', stringedActivities);
     postData.append('scope', 'app');
-    postData.append('profile_city', 'Warsaw');
-    postData.append('activities', '[4, 2]');
     postData.append('profile_img_ava', {
       uri: uploadedImage.uri,
       name: uploadedImage.fileName,
       type: uploadedImage.type,
     });
 
-    // Registration request
     const request = await axios
       .post(`${url}/${path}`, postData, headersFormData)
-      .then((res) => console.log('res', res))
-      .catch((error) => console.log('error', error));
+      .then((res) => {
+        const data = res.data;
+        const status = res.status;
+        console.log('res', res);
+
+        if (status === 201) {
+          stackNavigate('PrivacyBubble');
+        } else {
+        }
+      })
+      .catch((error) => {
+        setError({
+          isVisible: true,
+          title: 'Registration error',
+          text: 'Something went wrong. Check your values and try again.',
+        });
+        console.log('error', error);
+      });
   };
-
-  // const testRequestLogin = async () => {
-  //   let data = new FormData();
-  //   data.append('username', 'test6@nazar.com');
-  //   data.append('password', '12345678');
-  //   data.append('grant_type', 'password');
-  //   data.append('client_id', 'ZPwcGbFGFFjMZ34hCM4r4XEyAL8SCL');
-  //   data.append('client_secret', '7wP4je=NeR3&zJaJz3#35#bHZ?UA+gP-8EGHcPT-');
-
-  //   console.log('data', data);
-
-  //   const request = await axios
-  //     .post('http://admin.officialdotzapp.com/api/appuser/login', data, {
-  //       'Content-Type': 'application/x-www-form-urlencoded',
-  //     })
-  //     .then((res) => console.log('res', res))
-  //     .catch((error) => console.log('error', error));
-  // };
 
   const getActivities = async () => {
     const request = await axios
       .get(`${url}/activities?activities=[]`, headersUserToken)
-      .then((res) => console.log('res', res))
+      .then((res) => {
+        console.log(res);
+        setActivitiesData(res.data);
+      })
       .catch((error) => console.log('error', error));
   };
 
+  const stackNavigate = (route) => {
+    navigation.navigate(route);
+  };
+
+  const hideAlert = () => {
+    setTimeout(() => {
+      setError({isVisible: false, title: '', text: ''});
+    }, 500);
+  };
+
+  const renderAlert = error.isVisible ? (
+    <Alert
+      title={error.title}
+      text={error.text}
+      type="error"
+      closeAction={hideAlert}
+    />
+  ) : null;
+
+  useEffect(() => {
+    getActivities();
+  }, []);
+
   return (
-    <ScrollView style={s.container}>
-      <View style={s.wrapper}>
+    <Fragment>
+      {renderAlert}
+      <ScrollView style={s.container}>
         <View style={s.wrapper}>
-          <RegistrationForm
-            onNameChange={(name) => setNameValue(name)}
-            onCityChange={(city) => setCityValue(city)}
-          />
+          <View style={s.wrapper}>
+            <RegistrationForm
+              onNameChange={(name) => setNameValue(name)}
+              onCityChange={(city) => setCityValue(city)}
+              onImageLoaded={(image) => setUploadedImage(image)}
+            />
+          </View>
+          <View style={s.wrapper}>
+            <Selector
+              activities={activitiesData}
+              onActivityChange={(activities) =>
+                setSelectedActivities(activities)
+              }
+            />
+          </View>
+          <View style={s.wrapper}>
+            <Button
+              text={'Continue'}
+              style={'orange'}
+              action={() => checkInputs()}
+            />
+          </View>
         </View>
-        <View style={s.wrapper}>
-          <Selector />
-        </View>
-        <View style={s.wrapper}>
-          <Button
-            text={'Continue'}
-            style={'orange'}
-            // action={() => stackNavigate('PrivacyBubble')}
-            action={() => getActivities()}
-          />
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </Fragment>
   );
 };
 

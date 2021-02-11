@@ -41,6 +41,8 @@ export default StyleSheet.create({
   checkBox: {
     width: 40,
     height: 40,
+    borderRadius: 40,
+    backgroundColor: '#fff',
   },
   checkBoxImg: {
     width: 40,
