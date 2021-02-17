@@ -28,8 +28,8 @@ export default StyleSheet.create({
     borderWidth: 2,
   },
   itemImg: {
-    width: 40,
-    height: 40,
+    width: 35,
+    height: 35,
     resizeMode: 'contain',
   },
   itemTitle: {

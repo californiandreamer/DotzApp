@@ -1,6 +1,7 @@
+import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import {GoogleSignin, statusCodes} from '@react-native-community/google-signin';
 import axios from 'axios';
-import React, {useState} from 'react';
 import {
   Image,
   ImageBackground,
@@ -9,13 +10,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import {
-  clientId,
-  clientSecret,
-  headersUrlencoded,
-  url,
-  getAccessToken,
-} from '../../api/api';
+import {clientId, clientSecret, headersUrlencoded, url} from '../../api/api';
+import {getAccessToken} from '../../hooks/useAccessToken';
 import BackgroundImage from '../../assets/images/gradient.jpg';
 import Logo from '../../assets/images/logo.png';
 import {setItem} from '../../hooks/useAsyncStorage';
@@ -29,6 +25,7 @@ const Login = () => {
     text: '',
   });
 
+  const path = 'appuser/login';
   const navigation = useNavigation();
 
   const loginRequest = async (email, password) => {
@@ -40,7 +37,7 @@ const Login = () => {
     postData.append('client_secret', clientSecret);
 
     const request = await axios
-      .post(`${url}/appuser/login`, postData, headersUrlencoded)
+      .post(`${url}/${path}`, postData, headersUrlencoded)
       .then((res) => {
         const data = res.data;
         setToken(data.access_token);
@@ -58,11 +55,6 @@ const Login = () => {
   const setToken = async (token) => {
     await setItem('access_token', token);
     stackNavigate('Root');
-  };
-
-  const getToken = async () => {
-    const token = await getAccessToken();
-    console.log('gottenToken', token);
   };
 
   const stackNavigate = (route, params) => {
@@ -94,6 +86,7 @@ const Login = () => {
         </View>
         <LoginForm
           action={(email, password) => loginRequest(email, password)}
+          action2={() => console.log('Google Login')}
           onError={(title, text) => {
             setError({isVisible: true, title, text});
           }}

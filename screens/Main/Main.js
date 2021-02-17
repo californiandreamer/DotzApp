@@ -1,12 +1,18 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {StyleSheet, Text, View, Platform, Image, Animated} from 'react-native';
-import {useNavigation, DrawerActions} from '@react-navigation/native';
-import MapboxGL from '@react-native-mapbox-gl/maps';
-import {mapBoxToken} from '../../api/api';
+import React, {Fragment, useEffect, useRef, useState} from 'react';
 import {
+  StyleSheet,
+  Text,
+  View,
+  Platform,
+  Image,
+  Animated,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-} from 'react-native-gesture-handler';
+} from 'react-native';
+import * as turf from '@turf/turf';
+// import * as turf from '@turf/helpers'; // need to remove ?
+import MapboxGL from '@react-native-mapbox-gl/maps';
+import {useNavigation, DrawerActions} from '@react-navigation/native';
+import {activitiesImageUrl, mapBoxToken} from '../../api/api';
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import PlusImg from '../../assets/icons/ic-plus.png';
 import RouteImg from '../../assets/icons/ic-plus1.png';
@@ -18,20 +24,38 @@ import NextImg from '../../assets/icons/icon-siguiente.png';
 import Alert from '../../misc/Alert/Alert';
 import Bar from '../../misc/Bar/Bar';
 import PopUp from '../../misc/PopUp/PopUp';
-import Button from '../../misc/Button/Button';
+import {getHeadersWithAccessToken} from '../../hooks/useAccessToken';
+import {axiosGet} from '../../hooks/useAxios';
+import {defaultLocation} from '../../data';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
 const Main = () => {
+  const path = '/locations';
   const navigation = useNavigation();
 
+  const defCoords = [
+    [21.11121270687144, 52.244992501492334],
+    [21.11121270627144, 52.244992501493334],
+  ];
+
+  const [locationsData, setLocationsData] = useState([]);
   const [openOptions, setOpenOptions] = useState(false);
   const [barVisible, setBarVisible] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [popUpVisible, setPopUpVisible] = useState(false);
   const [popUpProps, setPopUpProps] = useState({});
-  const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
   const [alertProps, setAlertProps] = useState({});
+  const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
+
+  const [activeLocation, setActiveLocation] = useState(null);
+  const [userStartLocation, setUserStartLocation] = useState(defaultLocation);
+  const [routeDrawerActive, setRouteDrawerActive] = useState(false);
+  const [placeDrawerActive, setPlaceDrawerActive] = useState(false);
+  const [drawedRouteCoordinates, setDrawedRouteCoordinates] = useState([]);
+  const [drawedPlaceCoordinates, setDrawedPlaceCoordinates] = useState(
+    userStartLocation,
+  );
 
   const routeBtnVal = useRef(new Animated.Value(30)).current;
   const placeBtnVal = useRef(new Animated.Value(30)).current;
@@ -105,16 +129,17 @@ const Main = () => {
     navigation.navigate(route);
   };
 
+  const handleUserLocation = (e) => {
+    setUserStartLocation([e.coords.longitude, e.coords.latitude]);
+  };
+
   const addOption = (type) => {
     hideOptions();
     setOpenOptions(false);
     setAlertVisible(true);
     setAlertProps({
-      title: type === 'route' ? 'Submit a Route' : 'Submit a Place',
-      text:
-        type === 'route'
-          ? 'Enter a name of this Route'
-          : 'Enter a name of this Place',
+      title: `Submit a ${type}`,
+      text: `Enter a name of this ${type}`,
       type: 'input',
       action1: () => nextAlertStep(type),
       closeAction: () => cancelAdding(),
@@ -122,8 +147,13 @@ const Main = () => {
   };
 
   const nextAlertStep = (type) => {
+    if (type === 'route') {
+      setRouteDrawerActive(true);
+    } else {
+      setPlaceDrawerActive(true);
+    }
     setAlertProps({
-      title: type === 'route' ? 'Submit a Route' : 'Submit a Place',
+      title: `Submit a ${type}`,
       text:
         type === 'route'
           ? 'Draw a Route from Start to Finish'
@@ -142,9 +172,43 @@ const Main = () => {
 
   const cancelAdding = () => {
     setAlertVisible(false);
+    setRouteDrawerActive(false);
+    setDrawedRouteCoordinates([]);
+    setPlaceDrawerActive(false);
+  };
+
+  const getLocations = async () => {
+    const headers = await getHeadersWithAccessToken();
+    const locations = await axiosGet(path, headers);
+    console.log('locations', locations);
+    setLocationsData(locations);
+  };
+
+  const drawRoute = (e) => {
+    const touchCoordinates = e.geometry.coordinates;
+    setDrawedRouteCoordinates((prev) => [...prev, touchCoordinates]);
+  };
+
+  const placePoint = turf.geometry('Point', drawedPlaceCoordinates);
+  const drawPlace = (e) => {
+    const touchCoordinates = e.geometry.coordinates;
+    setDrawedPlaceCoordinates(touchCoordinates);
+  };
+
+  const returnShape = () => {
+    if (drawedRouteCoordinates.length <= 1) {
+      const point = turf.geometry('Point', drawedRouteCoordinates[0]);
+      return point;
+    } else {
+      const point = turf.geometry('MultiPoint', []);
+      const line = turf.geometry('LineString', drawedRouteCoordinates);
+      const collection = turf.geometryCollection([point, line]);
+      return collection;
+    }
   };
 
   useEffect(() => {
+    getLocations();
     getUserLocationPermision();
   }, []);
 
@@ -232,29 +296,76 @@ const Main = () => {
     </View>
   );
 
-  const renderPlace = (
+  const renderLocations = locationsData.map((location) => (
     <MapboxGL.MarkerView
-      key={'test'}
+      key={location.loc_id}
       id="Test"
-      coordinate={[-118.243683, 34.052235]}>
-      <View style={s.mapPopUp}>
-        <View style={s.mapPopUpInner}>
-          <TouchableOpacity
-            style={s.mapPopUpBtn}
-            activeOpacity={0.8}
-            onPress={() => console.log('Hello!')}>
-            <Image style={s.mapPopUpImg} source={GirlImg} />
-          </TouchableOpacity>
-          <Text style={s.mapPopUpName}>John Doe</Text>
-          <TouchableOpacity
-            style={s.nextBtn}
-            activeOpacity={0.8}
-            onPress={() => stackNavigate('Profile')}>
-            <Image style={s.nextImg} source={NextImg} />
-          </TouchableOpacity>
-        </View>
+      coordinate={JSON.parse(location.loc_cors_all)[0]}>
+      <View
+        style={[
+          s.mapPopUpInner,
+          {
+            backgroundColor:
+              activeLocation === location.loc_id ? '#141F25' : 'transparent',
+            elevation: activeLocation === location.loc_id ? 15 : 0,
+          },
+        ]}>
+        <TouchableOpacity
+          style={s.mapPopUpBtn}
+          activeOpacity={0.8}
+          onPress={() => setActiveLocation(location.loc_id)}>
+          <Image
+            style={s.mapPopUpImg}
+            source={{
+              uri: `${activitiesImageUrl}/${location.activity.activity_img}`,
+            }}
+          />
+        </TouchableOpacity>
+        {activeLocation === location.loc_id ? (
+          <Fragment>
+            <Text style={s.mapPopUpName}>{location.loc_title}</Text>
+            <TouchableOpacity
+              style={s.nextBtn}
+              activeOpacity={0.8}
+              onPress={() => stackNavigate('Profile')}>
+              <Image style={s.nextImg} source={NextImg} />
+            </TouchableOpacity>
+          </Fragment>
+        ) : null}
       </View>
     </MapboxGL.MarkerView>
+  ));
+
+  const renderRouteDrawer =
+    drawedRouteCoordinates.length !== 0 ? (
+      <MapboxGL.ShapeSource id="id" shape={returnShape()}>
+        <MapboxGL.LineLayer
+          id="line"
+          style={{
+            lineColor: '#F18303',
+            lineWidth: 3,
+          }}
+        />
+        <MapboxGL.CircleLayer
+          id="point"
+          style={{
+            circleRadius: 7,
+            circleColor: '#F18303',
+          }}
+        />
+      </MapboxGL.ShapeSource>
+    ) : null;
+
+  const renderPlaceDrawer = (
+    <MapboxGL.ShapeSource id="id" shape={placePoint}>
+      <MapboxGL.CircleLayer
+        id="point"
+        style={{
+          circleRadius: 10,
+          circleColor: '#F18303',
+        }}
+      />
+    </MapboxGL.ShapeSource>
   );
 
   return (
@@ -263,12 +374,25 @@ const Main = () => {
         style={s.map}
         compassEnabled={false}
         attributionEnabled={false}
-        logoEnabled={false}>
+        logoEnabled={false}
+        onPress={(e) =>
+          routeDrawerActive
+            ? drawRoute(e)
+            : placeDrawerActive
+            ? drawPlace(e)
+            : null
+        }>
         <MapboxGL.Camera zoomLevel={12} followUserLocation />
         <MapboxGL.UserLocation
-        // onUpdate={(e) => console.log(e)}
+          minDisplacement={10000}
+          onUpdate={(e) => handleUserLocation(e)}
         />
-        {renderPlace}
+        {routeDrawerActive
+          ? renderRouteDrawer
+          : placeDrawerActive
+          ? renderPlaceDrawer
+          : null}
+        {renderLocations}
       </MapboxGL.MapView>
       {[renderBurger, renderBlastMessageBtn, renderBlastPinBtn]}
       {openOptions ? <View style={s.mask} /> : null}
@@ -302,27 +426,26 @@ const s = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  mapPopUp: {
-    width: 100,
-    height: 130,
-  },
   mapPopUpBtn: {
     width: 50,
     height: 50,
-    borderRadius: 30,
-  },
-  mapPopUpImg: {
-    width: 50,
-    height: 50,
-    resizeMode: 'contain',
+    padding: 5,
+    backgroundColor: '#141F25',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
     borderRadius: 50,
   },
+  mapPopUpImg: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+    borderRadius: 100,
+  },
   mapPopUpInner: {
-    width: 100,
-    height: 130,
+    maxWidth: 100,
     padding: 8,
-    backgroundColor: '#141F25',
     borderRadius: 16,
+    backgroundColor: '#141F25',
     justifyContent: 'flex-end',
     alignItems: 'center',
   },

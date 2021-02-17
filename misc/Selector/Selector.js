@@ -45,7 +45,12 @@ const Selector = ({activities, onActivityChange}) => {
               : s.item
           }
           key={item.activity_id}>
-          <Image style={s.itemImg} source={item.activity_img} />
+          <Image
+            style={s.itemImg}
+            source={{
+              uri: `http://admin.officialdotzapp.com/uploads/activities/${item.activity_img}`,
+            }}
+          />
           <Text style={s.itemTitle}>{item.activity_name}</Text>
           <TouchableOpacity
             style={s.checkBox}

@@ -6,7 +6,7 @@ import {useNavigation} from '@react-navigation/native';
 import Button from '../Button/Button';
 import GoogleImg from '../../assets/icons/ic-google.png';
 
-const LoginForm = ({action, onError}) => {
+const LoginForm = ({action, action2, onError}) => {
   const [emailValue, setEmailValue] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
 
@@ -65,7 +65,10 @@ const LoginForm = ({action, onError}) => {
         <Button text={'Login'} style={'violet'} action={checkInputs} />
       </View>
       <View style={s.wrapper}>
-        <TouchableOpacity style={s.googleBtn} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={s.googleBtn}
+          activeOpacity={0.8}
+          onPress={action2}>
           <Image style={s.googleImg} source={GoogleImg} />
         </TouchableOpacity>
       </View>

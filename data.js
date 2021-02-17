@@ -1,3 +1,5 @@
+export const defaultLocation = [21.110343099999998, 52.2428017];
+
 export const activities = [
   {
     id: 1,
@@ -52,6 +54,10 @@ export const activities = [
 ];
 
 export const errorsContent = {
+  avoidPicture: {
+    title: 'Picture error',
+    text: 'Upload profile photo',
+  },
   invalidEmail: {
     title: 'Email error',
     text: 'Your email is invalid',

@@ -18,7 +18,7 @@ const Registration = ({route}) => {
   });
   const [nameValue, setNameValue] = useState('');
   const [cityValue, setCityValue] = useState('');
-  const [uploadedImage, setUploadedImage] = useState({});
+  const [uploadedImage, setUploadedImage] = useState(null);
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [activitiesData, setActivitiesData] = useState([
     {
@@ -32,29 +32,37 @@ const Registration = ({route}) => {
   const navigation = useNavigation();
 
   const checkInputs = () => {
-    if (nameValue.length > 3) {
-      if (cityValue.length > 0) {
-        if (selectedActivities.length !== 0) {
-          registrationRequest();
+    if (uploadedImage !== null) {
+      if (nameValue.length > 3) {
+        if (cityValue.length > 0) {
+          if (selectedActivities.length !== 0) {
+            registrationRequest();
+          } else {
+            setError({
+              isVisible: true,
+              title: errorsContent.invalidActivities.title,
+              text: errorsContent.invalidActivities.text,
+            });
+          }
         } else {
           setError({
             isVisible: true,
-            title: errorsContent.invalidActivities.title,
-            text: errorsContent.invalidActivities.text,
+            title: errorsContent.invalidCity.title,
+            text: errorsContent.invalidCity.text,
           });
         }
       } else {
         setError({
           isVisible: true,
-          title: errorsContent.invalidCity.title,
-          text: errorsContent.invalidCity.text,
+          title: errorsContent.invalidName.title,
+          text: errorsContent.invalidName.text,
         });
       }
     } else {
       setError({
         isVisible: true,
-        title: errorsContent.invalidName.title,
-        text: errorsContent.invalidName.text,
+        title: errorsContent.avoidPicture.title,
+        text: errorsContent.avoidPicture.text,
       });
     }
   };

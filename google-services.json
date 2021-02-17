@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "336354922212",
+    "project_id": "dotz-app",
+    "storage_bucket": "dotz-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:336354922212:android:73524a5200b5a8130fe6f1",
+        "android_client_info": {
+          "package_name": "com.californianapps.dotzapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "336354922212-e05v6ppa4bu0j9b66rj0aoemv8tuuj93.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDs7oJ4q7UeiHS26dWzSjFqP6cHlesxi3o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "336354922212-e05v6ppa4bu0j9b66rj0aoemv8tuuj93.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
