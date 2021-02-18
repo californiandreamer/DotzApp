@@ -4,15 +4,30 @@ import {useNavigation} from '@react-navigation/native';
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import * as turf from '@turf/turf';
 // import circle from '@turf/circle'; // need to remove
-import {mapBoxToken} from '../../api/api';
+import {headersFormData, mapBoxToken, url} from '../../api/api';
 import Alert from '../../misc/Alert/Alert';
-import {defaultLocation} from '../../data';
+import {defaultLocation, privacyBubbleContent, errorsContent} from '../../data';
+import axios from 'axios';
+import {axiosPost} from '../../hooks/useAxios';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
-const PrivacyBubble = () => {
+const PrivacyBubble = ({route}) => {
+  const email = route.params.email;
+  const password = route.params.password;
+  const name = route.params.name;
+  const city = route.params.city;
+  const activities = route.params.activities;
+  const image = route.params.image;
+
+  const path = 'appuser/register';
   const navigation = useNavigation();
 
+  const [error, setError] = useState({
+    isVisible: false,
+    title: '',
+    text: '',
+  });
   const [circleCoordinates, setCircleCoordinates] = useState(defaultLocation);
   const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
 
@@ -41,6 +56,99 @@ const PrivacyBubble = () => {
     setCircleCoordinates(e.geometry.coordinates);
   };
 
+  const registrationRequest = async () => {
+    const stringedCoordinates = JSON.stringify(circleCoordinates);
+
+    console.log(
+      'log',
+      email,
+      password,
+      name,
+      city,
+      activities,
+      stringedCoordinates,
+      image.uri,
+      image.fileName,
+    );
+
+    let postData = new FormData();
+    postData.append('email', email);
+    postData.append('password', password);
+    postData.append('name', name);
+    postData.append('profile_city', city);
+    postData.append('activities', activities);
+    postData.append('scope', 'app');
+    postData.append('profile_privacy_buble', stringedCoordinates);
+    postData.append('profile_img_ava', {
+      uri: image.uri,
+      name: image.fileName,
+      type: image.type,
+    });
+
+    const request = await axiosPost(path, postData, headersFormData);
+    console.log('request', request);
+
+    if (request.app_user_name === name) {
+      stackNavigate('ChooseActivity');
+    } else {
+      setError({
+        isVisible: true,
+        title: errorsContent.registrationError.title,
+        text: errorsContent.registrationError.text,
+      });
+    }
+
+    // const request = await axios
+    //   .post(`${url}/${path}`, postData, headersFormData)
+    //   .then((res) => {
+    //     const data = res.data;
+    //     const status = res.status;
+    //     console.log('res', res);
+
+    //     if (status === 201) {
+    //       stackNavigate('ChooseActivity');
+    //     } else {
+    //       setError({
+    //         isVisible: true,
+    //         title: errorsContent.registrationError.title,
+    //         text: errorsContent.registrationError.text,
+    //       });
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     setError({
+    //       isVisible: true,
+    //       title: errorsContent.registrationError.title,
+    //       text: errorsContent.registrationError.text,
+    //     });
+    //     console.log('error', error);
+    //   });
+  };
+
+  const hideAlert = () => {
+    setTimeout(() => {
+      setError({isVisible: false, title: '', text: ''});
+    }, 500);
+  };
+
+  const renderErrorAlert = (
+    <Alert
+      title={error.title}
+      text={error.text}
+      type="error"
+      closeAction={hideAlert}
+    />
+  );
+
+  const renderAlert = (
+    <Alert
+      title={privacyBubbleContent.title}
+      text={privacyBubbleContent.text}
+      type={'next'}
+      action1={() => registrationRequest()}
+    />
+  );
+
   const renderCircle = (
     <MapboxGL.ShapeSource id="id" shape={myCircle}>
       <MapboxGL.LineLayer
@@ -65,7 +173,7 @@ const PrivacyBubble = () => {
         attributionEnabled={false}
         logoEnabled={false}
         onPress={(e) => handleMapPress(e)}>
-        <MapboxGL.Camera zoomLevel={12} followUserLocation />
+        <MapboxGL.Camera zoomLevel={8} followUserLocation />
         <MapboxGL.UserLocation
           minDisplacement={10000}
           onUpdate={(e) => handleUserLocation(e)}
@@ -73,14 +181,8 @@ const PrivacyBubble = () => {
         <MapboxGL.PointAnnotation id="Point" coordinate={circleCoordinates} />
         {renderCircle}
       </MapboxGL.MapView>
-      <Alert
-        title={'Set up your Privacy Bubble'}
-        text={
-          'You will not be tracked or displayed while you presenting in that area'
-        }
-        type={'next'}
-        action1={() => stackNavigate('ChooseActivity')}
-      />
+      {renderAlert}
+      {error.isVisible ? renderErrorAlert : null}
     </View>
   );
 };

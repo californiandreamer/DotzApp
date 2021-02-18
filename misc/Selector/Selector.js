@@ -5,9 +5,10 @@ import agreeOn from '../../assets/icons/ic-agreeOn.png';
 import agreeOff from '../../assets/icons/ic-agreeOff.png';
 
 const Selector = ({activities, onActivityChange}) => {
-  const [activeItems, setActiveItems] = useState(['1']);
-
   const data = activities;
+  const path = 'http://admin.officialdotzapp.com/uploads/activities';
+
+  const [activeItems, setActiveItems] = useState(['1']);
 
   const checkActiveItems = (id) => {
     const isIncluded = activeItems.includes(id);
@@ -48,7 +49,7 @@ const Selector = ({activities, onActivityChange}) => {
           <Image
             style={s.itemImg}
             source={{
-              uri: `http://admin.officialdotzapp.com/uploads/activities/${item.activity_img}`,
+              uri: `${path}/${item.activity_img}`,
             }}
           />
           <Text style={s.itemTitle}>{item.activity_name}</Text>

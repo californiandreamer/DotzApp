@@ -86,4 +86,14 @@ export const errorsContent = {
     title: 'Activities error',
     text: 'Choose at least one activity',
   },
+  registrationError: {
+    title: 'Registration error',
+    text: 'Something went wrong. Check your values and try again.',
+  },
+};
+
+export const privacyBubbleContent = {
+  title: 'Set up your Privacy Bubble',
+  text:
+    'You will not be tracked or displayed while you presenting in that area',
 };

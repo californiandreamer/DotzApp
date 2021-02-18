@@ -3,7 +3,7 @@ import {StyleSheet, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import {errorsContent} from '../../data';
-import {headersFormData, url, headersUserToken} from '../../api/api';
+import {url, headersUserToken} from '../../api/api';
 import Button from '../../misc/Button/Button';
 import Selector from '../../misc/Selector/Selector';
 import RegistrationForm from '../../misc/RegistrationForm/RegistrationForm';
@@ -11,6 +11,8 @@ import Alert from '../../misc/Alert/Alert';
 import LoadingGif from '../../assets/icons/loading.gif';
 
 const Registration = ({route}) => {
+  const navigation = useNavigation();
+
   const [error, setError] = useState({
     isVisible: false,
     title: '',
@@ -28,15 +30,23 @@ const Registration = ({route}) => {
     },
   ]);
 
-  const path = 'appuser/register';
-  const navigation = useNavigation();
+  const email = route.params.email;
+  const password = route.params.password;
+  const stringedActivities = JSON.stringify(selectedActivities);
 
   const checkInputs = () => {
     if (uploadedImage !== null) {
       if (nameValue.length > 3) {
         if (cityValue.length > 0) {
           if (selectedActivities.length !== 0) {
-            registrationRequest();
+            stackNavigate('PrivacyBubble', {
+              email,
+              password,
+              name: nameValue,
+              city: cityValue,
+              activities: stringedActivities,
+              image: uploadedImage,
+            });
           } else {
             setError({
               isVisible: true,
@@ -67,46 +77,6 @@ const Registration = ({route}) => {
     }
   };
 
-  const registrationRequest = async () => {
-    const email = route.params.email;
-    const password = route.params.password;
-    const stringedActivities = JSON.stringify(selectedActivities);
-
-    let postData = new FormData();
-    postData.append('email', email);
-    postData.append('password', password);
-    postData.append('name', nameValue);
-    postData.append('profile_city', cityValue);
-    postData.append('activities', stringedActivities);
-    postData.append('scope', 'app');
-    postData.append('profile_img_ava', {
-      uri: uploadedImage.uri,
-      name: uploadedImage.fileName,
-      type: uploadedImage.type,
-    });
-
-    const request = await axios
-      .post(`${url}/${path}`, postData, headersFormData)
-      .then((res) => {
-        const data = res.data;
-        const status = res.status;
-        console.log('res', res);
-
-        if (status === 201) {
-          stackNavigate('PrivacyBubble');
-        } else {
-        }
-      })
-      .catch((error) => {
-        setError({
-          isVisible: true,
-          title: 'Registration error',
-          text: 'Something went wrong. Check your values and try again.',
-        });
-        console.log('error', error);
-      });
-  };
-
   const getActivities = async () => {
     const request = await axios
       .get(`${url}/activities?activities=[]`, headersUserToken)
@@ -117,8 +87,8 @@ const Registration = ({route}) => {
       .catch((error) => console.log('error', error));
   };
 
-  const stackNavigate = (route) => {
-    navigation.navigate(route);
+  const stackNavigate = (route, params) => {
+    navigation.navigate(route, params);
   };
 
   const hideAlert = () => {

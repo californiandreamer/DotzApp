@@ -1,15 +1,52 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Dimensions, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../misc/Button/Button';
 import Changer from '../../misc/Changer/Changer';
+import {axiosGet, axiosPost} from '../../hooks/useAxios';
+import {getAccessToken} from '../../hooks/useAccessToken';
+import {activities} from '../../data';
+import {setItem} from '../../hooks/useAsyncStorage';
 
 const ChooseActivity = () => {
+  const path = 'profiles/current_activity';
   const navigation = useNavigation();
+
+  const [activitiesData, setActivitiesData] = useState([]);
+  const [currentActivity, setCurrentActivity] = useState('1');
 
   const stackNavigate = (route) => {
     navigation.navigate(route);
   };
+
+  const getActivities = async () => {
+    const activitiesPath = 'activities?activities=[]';
+    const request = await axiosGet(activitiesPath);
+    setActivitiesData(request);
+  };
+
+  const currentActivityRequest = async () => {
+    const token = await getAccessToken();
+    const headers = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    };
+
+    let postData = new URLSearchParams();
+    postData.append('profile_current_act', currentActivity);
+
+    await setItem('current_activity', currentActivity);
+
+    const request = await axiosPost(path, postData, headers);
+
+    stackNavigate('Root');
+  };
+
+  useEffect(() => {
+    getActivities();
+  }, []);
 
   return (
     <ScrollView style={s.container}>
@@ -20,13 +57,16 @@ const ChooseActivity = () => {
         <Text style={s.text}>Choose your current activity</Text>
       </View>
       <View style={s.wrapper}>
-        <Changer />
+        <Changer
+          activities={activitiesData}
+          action={(activity) => setCurrentActivity(activity)}
+        />
       </View>
       <View style={s.wrapper}>
         <Button
           text={'Start'}
           style={'orange'}
-          action={() => stackNavigate('Root')}
+          action={() => currentActivityRequest()}
         />
       </View>
     </ScrollView>

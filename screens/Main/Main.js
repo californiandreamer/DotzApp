@@ -12,7 +12,11 @@ import * as turf from '@turf/turf';
 // import * as turf from '@turf/helpers'; // need to remove ?
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {useNavigation, DrawerActions} from '@react-navigation/native';
-import {activitiesImageUrl, mapBoxToken} from '../../api/api';
+import {
+  activitiesImageUrl,
+  mapBoxToken,
+  headersUrlencoded,
+} from '../../api/api';
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import PlusImg from '../../assets/icons/ic-plus.png';
 import RouteImg from '../../assets/icons/ic-plus1.png';
@@ -24,9 +28,13 @@ import NextImg from '../../assets/icons/icon-siguiente.png';
 import Alert from '../../misc/Alert/Alert';
 import Bar from '../../misc/Bar/Bar';
 import PopUp from '../../misc/PopUp/PopUp';
-import {getHeadersWithAccessToken} from '../../hooks/useAccessToken';
-import {axiosGet} from '../../hooks/useAxios';
+import {
+  getAccessToken,
+  getHeadersWithAccessToken,
+} from '../../hooks/useAccessToken';
+import {axiosGet, axiosPost} from '../../hooks/useAxios';
 import {defaultLocation} from '../../data';
+import {getItem} from '../../hooks/useAsyncStorage';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -50,12 +58,18 @@ const Main = () => {
 
   const [activeLocation, setActiveLocation] = useState(null);
   const [userStartLocation, setUserStartLocation] = useState(defaultLocation);
+  const [alertCityValue, setAlertCityValue] = useState('No city');
+  const [alertInputValue, setAlertInputValue] = useState('No name');
   const [routeDrawerActive, setRouteDrawerActive] = useState(false);
   const [placeDrawerActive, setPlaceDrawerActive] = useState(false);
   const [drawedRouteCoordinates, setDrawedRouteCoordinates] = useState([]);
   const [drawedPlaceCoordinates, setDrawedPlaceCoordinates] = useState(
     userStartLocation,
   );
+
+  console.log('alertCityValue', alertCityValue);
+  console.log('alertInputValue', alertInputValue);
+  console.log('drawedRouteCoordinates TOP', drawedRouteCoordinates);
 
   const routeBtnVal = useRef(new Animated.Value(30)).current;
   const placeBtnVal = useRef(new Animated.Value(30)).current;
@@ -140,7 +154,10 @@ const Main = () => {
     setAlertProps({
       title: `Submit a ${type}`,
       text: `Enter a name of this ${type}`,
+      text2: 'Enter a name of city',
       type: 'input',
+      onType: (val) => setAlertInputValue(val),
+      onType2: (val) => setAlertCityValue(val),
       action1: () => nextAlertStep(type),
       closeAction: () => cancelAdding(),
     });
@@ -160,8 +177,8 @@ const Main = () => {
           : 'Drop a Pin on a Place you want to submit',
       type: 'choice',
       action1: () => cancelAdding(),
-      action2: () => cancelAdding(),
-      // closeAction: () => cancelAdding(),
+      action2: () => addLocaitonRequest(),
+      closeAction: () => cancelAdding(),
     });
   };
 
@@ -171,6 +188,7 @@ const Main = () => {
   };
 
   const cancelAdding = () => {
+    setAlertInputValue('');
     setAlertVisible(false);
     setRouteDrawerActive(false);
     setDrawedRouteCoordinates([]);
@@ -207,6 +225,37 @@ const Main = () => {
     }
   };
 
+  const addLocaitonRequest = async () => {
+    console.log('drawedRouteCoordinates', drawedRouteCoordinates);
+    const currentActivity = await getItem('current_activity');
+    const start = JSON.stringify(drawedRouteCoordinates[0]);
+    const finish = JSON.stringify(
+      drawedRouteCoordinates[drawedRouteCoordinates.length - 1],
+    );
+    const routes = JSON.stringify(drawedRouteCoordinates);
+
+    const token = await getAccessToken();
+    const headers = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    };
+
+    console.log('log', currentActivity, start, finish, routes, token);
+
+    let postData = new URLSearchParams();
+    postData.append('activity_id', currentActivity);
+    postData.append('loc_p_title', alertInputValue);
+    postData.append('loc_p_city', alertCityValue);
+    postData.append('loc_p_cors_start', start);
+    postData.append('loc_p_cors_finish', finish);
+    postData.append('loc_p_cors_all', routes);
+
+    // const request = await axiosPost('locs_p/add', postData, headers);
+    console.log('res', request);
+  };
+
   useEffect(() => {
     getLocations();
     getUserLocationPermision();
@@ -229,13 +278,14 @@ const Main = () => {
         style={s.button}
         activeOpacity={0.8}
         onPress={() => {
-          setPopUpVisible(true);
-          setPopUpProps({
-            title: 'Blast Message',
-            type: 'compose',
-            action1: hidePopUp,
-            action2: hidePopUp,
-          });
+          // setPopUpVisible(true);
+          // setPopUpProps({
+          //   title: 'Blast Message',
+          //   type: 'compose',
+          //   action1: hidePopUp,
+          //   action2: hidePopUp,
+          // });
+          addLocaitonRequest();
         }}>
         <Image style={s.buttonImg} source={BlastMessageImg} />
       </TouchableOpacity>

@@ -1,24 +1,32 @@
 import React, {useState} from 'react';
 import s from './Changer.s';
 import {View, Text, Image, TouchableOpacity} from 'react-native';
-import {activities} from '../../data';
-import testImg from '../../assets/icons/Ic-Profile.png';
 
-const Changer = () => {
-  const [activeItem, setActiveItem] = useState(1);
+const Changer = ({activities, action}) => {
+  const path = 'http://admin.officialdotzapp.com/uploads/activities';
 
-  const data = activities;
+  const [activeItem, setActiveItem] = useState('1');
 
   return (
     <View style={s.container}>
-      {data.map((item) => (
-        <View style={s.item} key={item.id}>
+      {activities.map((activity) => (
+        <View style={s.item} key={activity.activity_id}>
           <TouchableOpacity
-            style={activeItem === item.id ? s.activeInner : s.inner}
+            style={
+              activeItem === activity.activity_id ? s.activeInner : s.inner
+            }
             activeOpacity={0.8}
-            onPress={() => setActiveItem(item.id)}>
-            <Image style={s.image} source={item.image} />
-            <Text style={s.text}>{item.name}</Text>
+            onPress={() => {
+              action(activity.activity_id);
+              setActiveItem(activity.activity_id);
+            }}>
+            <Image
+              style={s.image}
+              source={{
+                uri: `${path}/${activity.activity_img}`,
+              }}
+            />
+            <Text style={s.text}>{activity.activity_name}</Text>
           </TouchableOpacity>
         </View>
       ))}

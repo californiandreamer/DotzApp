@@ -12,7 +12,17 @@ import Button from '../Button/Button';
 import NextImg from '../../assets/icons/icon-siguiente.png';
 import CloseImg from '../../assets/icons/ic-close2.png';
 
-const Alert = ({title, text, type, action1, action2, closeAction}) => {
+const Alert = ({
+  title,
+  text,
+  text2,
+  type,
+  action1,
+  action2,
+  onType,
+  onType2,
+  closeAction,
+}) => {
   const animationVal = useRef(new Animated.Value(-500)).current;
 
   const showAlert = () => {
@@ -59,7 +69,27 @@ const Alert = ({title, text, type, action1, action2, closeAction}) => {
       case 'input':
         return (
           <View style={s.wrapper}>
-            <TextInput style={s.input} />
+            <TextInput
+              style={s.input}
+              onChange={(e) => {
+                e.persist;
+                onType(e.nativeEvent.text);
+              }}
+            />
+            {text2 ? (
+              <View style={s.wrapper}>
+                <Text style={s.text}>{text2}</Text>
+              </View>
+            ) : null}
+            {onType2 ? (
+              <TextInput
+                style={s.input}
+                onChange={(e) => {
+                  e.persist;
+                  onType2(e.nativeEvent.text);
+                }}
+              />
+            ) : null}
             <Button text={'Next'} style={'orange'} action={action1} />
           </View>
         );
