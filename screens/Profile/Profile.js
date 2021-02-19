@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Image,
   ScrollView,
@@ -14,17 +14,21 @@ import Header from '../../misc/Header/Header';
 import Button from '../../misc/Button/Button';
 import Changer from '../../misc/Changer/Changer';
 import GradientImg from '../../assets/images/gradient.jpg';
-import AvatarImg from '../../assets/images/girl.jpg';
+import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 import DotImg from '../../assets/icons/ic-likeOn.png';
 import DistanceImg from '../../assets/icons/ic-distance.png';
 import PersonImg from '../../assets/icons/Ic-Profile.png';
 import SettingsImg from '../../assets/icons/Ic-Setting.png';
 import LocationImg from '../../assets/icons/ic-Location2.png';
-import {mapBoxToken} from '../../api/api';
+import {mapBoxToken, profileImageUrl} from '../../api/api';
+import {getItem, setItem} from '../../hooks/useAsyncStorage';
+import {axiosGet, axiosPost} from '../../hooks/useAxios';
+import {getAccessToken} from '../../hooks/useAccessToken';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
 const Profile = () => {
+  const path = 'profiles/current_activity';
   const navigation = useNavigation();
   const tabProps = {
     tab1: 'Main info',
@@ -32,6 +36,10 @@ const Profile = () => {
   };
 
   const [activeTab, setActiveTab] = useState(tabProps.tab1);
+  const [activitiesData, setActivitiesData] = useState([]);
+  const [profileData, setProfileData] = useState({});
+  const [currentActivity, setCurrentActivity] = useState('1');
+  console.log('currentActivity', currentActivity);
 
   const getActiveTab = (value) => {
     setActiveTab(value);
@@ -41,12 +49,82 @@ const Profile = () => {
     navigation.navigate(route);
   };
 
+  const getProfileData = async () => {
+    const data = await getItem('profile');
+    const parsedData = JSON.parse(data);
+    setCurrentActivity(parsedData.profile_current_act);
+    setProfileData({
+      id: parsedData.profile_id,
+      name: parsedData.app_user_name,
+      email: parsedData.email,
+      city: parsedData.profile_city,
+      currentActivity: parsedData.profile_current_act,
+      activities: parsedData.activities,
+      image: parsedData.profile_img_ava,
+    });
+    getActivities(parsedData.activities);
+  };
+
+  const getActivities = async (current) => {
+    const activitiesPath = 'activities?activities=[]';
+    const request = await axiosGet(activitiesPath);
+    getCurrentActivities(current, request);
+  };
+
+  let currentActivitiesArr = [];
+  const getCurrentActivities = (current, data) => {
+    const activities = current;
+    console.log('activities', activities);
+
+    for (let i = 0; i < data.length; i++) {
+      const id = data[i].activity_id;
+      const value = activities.includes(id);
+      console.log('value');
+      if (value) {
+        currentActivitiesArr.push(data[i]);
+      }
+    }
+
+    setActivitiesData(currentActivitiesArr);
+  };
+
+  // const currentActivityRequest = async () => {
+  //   const token = await getAccessToken();
+  //   const headers = {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //       'Content-Type': 'application/x-www-form-urlencoded',
+  //     },
+  //   };
+
+  //   let postData = new URLSearchParams();
+  //   postData.append('profile_current_act', currentActivity);
+
+  //   await setItem('current_activity', currentActivity);
+
+  //   const request = await axiosPost(path, postData, headers);
+
+  //   stackNavigate('Root');
+  // };
+
+  useEffect(() => {
+    getProfileData();
+  }, []);
+
   const renderMainInfo = (
     <View style={s.tabContent}>
       <Text style={s.title}>Current activity</Text>
-      <Changer />
-      <Text style={s.title}>All activities</Text>
-      <Changer />
+      <Changer
+        disabled
+        activities={activitiesData}
+        currentActivity={currentActivity}
+        action={(activity) => setCurrentActivity(activity)}
+      />
+      {/* <Text style={s.title}>All activities</Text>
+      <Changer
+        activities={activitiesData}
+        action={(activity) => setCurrentActivity(activity)}
+      /> */}
       <View style={s.rowStartWrapper}>
         <Text style={s.text}>Miles since registration: 14</Text>
         <Image style={s.image} source={DistanceImg} />
@@ -89,19 +167,26 @@ const Profile = () => {
       <Header
         title={'Profile'}
         icon={SettingsImg}
-        action={() => stackNavigate('Registration')}
+        action={() => stackNavigate('ChooseActivity')}
       />
       <Image style={s.background} source={GradientImg} />
       <View style={s.avatar}>
-        <Image style={s.avatarImg} source={AvatarImg} />
+        <Image
+          style={s.avatarImg}
+          source={
+            profileData.image
+              ? {uri: `${profileImageUrl}/${profileData.image}`}
+              : AvatarPlaceholderImg
+          }
+        />
       </View>
       <View style={s.content}>
         <View style={s.wrapper}>
-          <Text style={s.name}>John Doe</Text>
+          <Text style={s.name}>{profileData.name}</Text>
         </View>
         <View style={s.rowWrapper}>
           <Image style={s.locationImg} source={LocationImg} />
-          <Text style={s.locationText}>Los Angeles</Text>
+          <Text style={s.locationText}>{profileData.city}</Text>
         </View>
         <View style={s.wrapper}>
           <Tab {...tabProps} action={getActiveTab} />

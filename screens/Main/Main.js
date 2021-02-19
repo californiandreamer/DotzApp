@@ -7,23 +7,19 @@ import {
   Image,
   Animated,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import * as turf from '@turf/turf';
 // import * as turf from '@turf/helpers'; // need to remove ?
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {useNavigation, DrawerActions} from '@react-navigation/native';
-import {
-  activitiesImageUrl,
-  mapBoxToken,
-  headersUrlencoded,
-} from '../../api/api';
+import {activitiesImageUrl, mapBoxToken} from '../../api/api';
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import PlusImg from '../../assets/icons/ic-plus.png';
 import RouteImg from '../../assets/icons/ic-plus1.png';
 import CompassImg from '../../assets/icons/ic-plus2.png';
 import BlastPinImg from '../../assets/icons/ic-blast-pin.png';
 import BlastMessageImg from '../../assets/icons/ic-message.png';
-import GirlImg from '../../assets/images/girl.jpg';
 import NextImg from '../../assets/icons/icon-siguiente.png';
 import Alert from '../../misc/Alert/Alert';
 import Bar from '../../misc/Bar/Bar';
@@ -49,7 +45,7 @@ const Main = () => {
 
   const [locationsData, setLocationsData] = useState([]);
   const [openOptions, setOpenOptions] = useState(false);
-  const [barVisible, setBarVisible] = useState(false);
+  const [barVisible, setBarVisible] = useState(true);
   const [alertVisible, setAlertVisible] = useState(false);
   const [popUpVisible, setPopUpVisible] = useState(false);
   const [popUpProps, setPopUpProps] = useState({});
@@ -226,13 +222,18 @@ const Main = () => {
   };
 
   const addLocaitonRequest = async () => {
-    console.log('drawedRouteCoordinates', drawedRouteCoordinates);
+    // console.log('drawedRouteCoordinates', drawedRouteCoordinates);
+    // const currentActivity = await getItem('current_activity');
+    // const start = JSON.stringify(drawedRouteCoordinates[0]);
+    // const finish = JSON.stringify(
+    //   drawedRouteCoordinates[drawedRouteCoordinates.length - 1],
+    // );
+    // const routes = JSON.stringify(drawedRouteCoordinates);
+
     const currentActivity = await getItem('current_activity');
-    const start = JSON.stringify(drawedRouteCoordinates[0]);
-    const finish = JSON.stringify(
-      drawedRouteCoordinates[drawedRouteCoordinates.length - 1],
-    );
-    const routes = JSON.stringify(drawedRouteCoordinates);
+    const start = JSON.stringify(defaultLocation);
+    const finish = JSON.stringify(defaultLocation);
+    const routes = JSON.stringify([defaultLocation]);
 
     const token = await getAccessToken();
     const headers = {
@@ -252,7 +253,7 @@ const Main = () => {
     postData.append('loc_p_cors_finish', finish);
     postData.append('loc_p_cors_all', routes);
 
-    // const request = await axiosPost('locs_p/add', postData, headers);
+    const request = await axiosPost('locs_p/add', postData, headers);
     console.log('res', request);
   };
 
@@ -455,6 +456,9 @@ const Main = () => {
 };
 
 export default Main;
+
+const innerWidth = Dimensions.get('window').width;
+const innerHeight = Dimensions.get('window').height;
 
 const s = StyleSheet.create({
   container: {

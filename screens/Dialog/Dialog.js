@@ -3,8 +3,59 @@ import {Image, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {TextInput, TouchableOpacity} from 'react-native-gesture-handler';
 import Header from '../../misc/Header/Header';
 import ArrowCircleImg from '../../assets/icons/ic-Arrow-Left-Circle.png';
+import {getAccessToken} from '../../hooks/useAccessToken';
 
 const Dialog = () => {
+  const conn = new WebSocket(
+    `ws://admin.officialdotzapp.com:8088?access_token=9289e45d82eda45041c1a2ac78b06fa7bb46c403`,
+  );
+
+  // on server knocking
+  conn.onopen = function (e) {
+    console.log('onOpen', e);
+  };
+
+  // in data I can see all users
+  conn.onmessage = function (e) {
+    console.log('onMessage', e);
+  };
+
+  const connectToWebSocket = async () => {
+    // const token = await getAccessToken();
+    // console.log('cosTam', token);
+    let time_sent = new Date();
+    const obj = {
+      msg_reciever_id: '34',
+      msg: 'Hello!',
+      msg_timestamp_sent: time_sent.getTime(),
+      msg_time_sent: time_sent.toMysqlFormat(),
+    };
+    const stringed = JSON.stringify(obj);
+    conn.send(stringed);
+  };
+
+  function twoDigits(d) {
+    if (0 <= d && d < 10) return '0' + d.toString();
+    if (-10 < d && d < 0) return '-0' + (-1 * d).toString();
+    return d.toString();
+  }
+
+  Date.prototype.toMysqlFormat = function () {
+    return (
+      this.getFullYear() +
+      '-' +
+      twoDigits(1 + this.getMonth()) +
+      '-' +
+      twoDigits(this.getDate()) +
+      ' ' +
+      twoDigits(this.getHours()) +
+      ':' +
+      twoDigits(this.getMinutes()) +
+      ':' +
+      twoDigits(this.getSeconds())
+    );
+  };
+
   return (
     <View style={s.container}>
       <Header title={'Maciej Kowalski'} style={'orange'} />
@@ -20,7 +71,10 @@ const Dialog = () => {
         </View>
         <View style={s.inputArea}>
           <TextInput style={s.input} placeholder="Message here..." />
-          <TouchableOpacity style={s.button} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={s.button}
+            activeOpacity={0.8}
+            onPress={connectToWebSocket}>
             <Image style={s.buttonImg} source={ArrowCircleImg} />
           </TouchableOpacity>
         </View>

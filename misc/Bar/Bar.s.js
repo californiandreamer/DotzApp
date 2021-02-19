@@ -5,8 +5,10 @@ export default StyleSheet.create({
     width: '100%',
     height: '100%',
     position: 'absolute',
-    top: 400,
+    top: 0,
+    left: 0,
     zIndex: 100,
+    elevation: 5,
   },
   wrapper: {
     width: '100%',
@@ -15,15 +17,18 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   inner: {
-    minHeight: 250,
-    padding: 20,
+    height: '100%',
     backgroundColor: '#141F25',
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
+    paddingBottom: 120,
+  },
+  scrollBox: {
+    padding: 20,
   },
   responder: {
     width: '100%',
-    height: 30,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',

@@ -9,6 +9,9 @@ export const url = 'http://admin.officialdotzapp.com/api';
 export const activitiesImageUrl =
   'http://admin.officialdotzapp.com/uploads/activities/';
 
+export const profileImageUrl =
+  'http://admin.officialdotzapp.com/uploads/profiles/';
+
 export const clientId = 'ZPwcGbFGFFjMZ34hCM4r4XEyAL8SCL';
 
 export const clientSecret = '7wP4je=NeR3&zJaJz3#35#bHZ?UA+gP-8EGHcPT-';

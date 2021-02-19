@@ -6,7 +6,7 @@ import Changer from '../../misc/Changer/Changer';
 import {axiosGet, axiosPost} from '../../hooks/useAxios';
 import {getAccessToken} from '../../hooks/useAccessToken';
 import {activities} from '../../data';
-import {setItem} from '../../hooks/useAsyncStorage';
+import {getItem, setItem} from '../../hooks/useAsyncStorage';
 
 const ChooseActivity = () => {
   const path = 'profiles/current_activity';
@@ -17,6 +17,13 @@ const ChooseActivity = () => {
 
   const stackNavigate = (route) => {
     navigation.navigate(route);
+  };
+
+  const getProfileActivity = async () => {
+    const profileData = await getItem('profile');
+    const parsedData = JSON.parse(profileData);
+    setCurrentActivity(parsedData.profile_current_act);
+    getActivities();
   };
 
   const getActivities = async () => {
@@ -41,11 +48,21 @@ const ChooseActivity = () => {
 
     const request = await axiosPost(path, postData, headers);
 
+    saveCurrentActivity();
+
     stackNavigate('Root');
   };
 
+  const saveCurrentActivity = async () => {
+    const profileData = await getItem('profile');
+    const parsedData = JSON.parse(profileData);
+    parsedData.profile_current_act = currentActivity;
+    const stringedData = JSON.stringify(parsedData);
+    await setItem('profile', stringedData);
+  };
+
   useEffect(() => {
-    getActivities();
+    getProfileActivity();
   }, []);
 
   return (
@@ -59,6 +76,7 @@ const ChooseActivity = () => {
       <View style={s.wrapper}>
         <Changer
           activities={activitiesData}
+          currentActivity={currentActivity}
           action={(activity) => setCurrentActivity(activity)}
         />
       </View>

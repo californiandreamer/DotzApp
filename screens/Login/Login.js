@@ -17,6 +17,7 @@ import Logo from '../../assets/images/logo.png';
 import {setItem} from '../../hooks/useAsyncStorage';
 import Alert from '../../misc/Alert/Alert';
 import LoginForm from '../../misc/LoginForm/LoginForm';
+import {axiosPost} from '../../hooks/useAxios';
 
 const Login = () => {
   const [error, setError] = useState({
@@ -36,11 +37,26 @@ const Login = () => {
     postData.append('client_id', clientId);
     postData.append('client_secret', clientSecret);
 
+    // const request = await axiosPost(path, postData, headersUrlencoded);
+    // if (request.app_user.email === email) {
+    //   console.log('true');
+    // } else {
+    //   setError({
+    //     isVisible: true,
+    //     title: 'Login error',
+    //     text: 'Something went wrong. Check your values and try again.',
+    //   });
+    // }
+
     const request = await axios
       .post(`${url}/${path}`, postData, headersUrlencoded)
       .then((res) => {
         const data = res.data;
-        setToken(data.access_token);
+        const token = data.access_token;
+        const userInfo = data.app_user;
+        const userProfile = data.profile;
+        const profile = {...userProfile, ...userInfo};
+        saveProfileData(token, profile);
       })
       .catch((error) => {
         setError({
@@ -52,8 +68,10 @@ const Login = () => {
       });
   };
 
-  const setToken = async (token) => {
+  const saveProfileData = async (token, data) => {
+    const stringedData = JSON.stringify(data);
     await setItem('access_token', token);
+    await setItem('profile', stringedData);
     stackNavigate('Root');
   };
 

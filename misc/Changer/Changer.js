@@ -2,10 +2,8 @@ import React, {useState} from 'react';
 import s from './Changer.s';
 import {View, Text, Image, TouchableOpacity} from 'react-native';
 
-const Changer = ({activities, action}) => {
+const Changer = ({disabled, activities, currentActivity, action}) => {
   const path = 'http://admin.officialdotzapp.com/uploads/activities';
-
-  const [activeItem, setActiveItem] = useState('1');
 
   return (
     <View style={s.container}>
@@ -13,12 +11,12 @@ const Changer = ({activities, action}) => {
         <View style={s.item} key={activity.activity_id}>
           <TouchableOpacity
             style={
-              activeItem === activity.activity_id ? s.activeInner : s.inner
+              currentActivity === activity.activity_id ? s.activeInner : s.inner
             }
+            disabled={disabled}
             activeOpacity={0.8}
             onPress={() => {
               action(activity.activity_id);
-              setActiveItem(activity.activity_id);
             }}>
             <Image
               style={s.image}

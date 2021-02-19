@@ -89,7 +89,7 @@ const PrivacyBubble = ({route}) => {
     console.log('request', request);
 
     if (request.app_user_name === name) {
-      stackNavigate('ChooseActivity');
+      stackNavigate('Login');
     } else {
       setError({
         isVisible: true,
