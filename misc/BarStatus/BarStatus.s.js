@@ -8,14 +8,16 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   imageOuter: {
-    padding: 7,
+    width: 94,
+    height: 94,
+    padding: 12,
     borderWidth: 7,
     borderColor: '#37464F',
     borderRadius: 78,
   },
   image: {
-    width: 78,
-    height: 78,
+    width: '100%',
+    height: '100%',
     resizeMode: 'contain',
   },
   title: {

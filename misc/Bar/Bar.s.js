@@ -17,13 +17,16 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   inner: {
+    width: '100%',
     height: '100%',
     backgroundColor: '#141F25',
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
-    paddingBottom: 120,
+    // paddingBottom: 120,
   },
   scrollBox: {
+    width: '100%',
+    height: '100%',
     padding: 20,
   },
   responder: {

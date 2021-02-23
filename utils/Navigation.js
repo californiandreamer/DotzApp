@@ -97,7 +97,7 @@ const DrawerNavigator = () => {
 const Navigation = () => (
   <NavigationContainer>
     <Stack.Navigator
-      initialRouteName="Root"
+      initialRouteName="Login"
       screenOptions={{
         headerShown: false,
       }}>
@@ -109,6 +109,7 @@ const Navigation = () => (
       <Stack.Screen name="Root" component={DrawerNavigator} />
       <Stack.Screen name="Main" component={Main} />
       <Stack.Screen name="Dialog" component={Dialog} />
+      <Drawer.Screen name="Profile" component={Profile} />
     </Stack.Navigator>
   </NavigationContainer>
 );

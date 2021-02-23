@@ -1,4 +1,5 @@
-export const defaultLocation = [21.110343099999998, 52.2428017];
+// export const defaultLocation = [21.110343099999998, 52.2428017]; Warsaw
+export const defaultLocation = [-118.243683, 34.052235];
 
 export const activities = [
   {

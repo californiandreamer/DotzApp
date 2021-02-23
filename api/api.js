@@ -6,6 +6,8 @@ export const mapBoxToken =
 
 export const url = 'http://admin.officialdotzapp.com/api';
 
+export const socketUrl = 'ws://admin.officialdotzapp.com:8088?access_token=';
+
 export const activitiesImageUrl =
   'http://admin.officialdotzapp.com/uploads/activities/';
 

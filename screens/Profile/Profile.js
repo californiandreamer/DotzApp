@@ -27,7 +27,7 @@ import {getAccessToken} from '../../hooks/useAccessToken';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
-const Profile = () => {
+const Profile = ({route}) => {
   const path = 'profiles/current_activity';
   const navigation = useNavigation();
   const tabProps = {
@@ -35,6 +35,7 @@ const Profile = () => {
     tab2: 'Feed',
   };
 
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [activeTab, setActiveTab] = useState(tabProps.tab1);
   const [activitiesData, setActivitiesData] = useState([]);
   const [profileData, setProfileData] = useState({});
@@ -47,6 +48,25 @@ const Profile = () => {
 
   const stackNavigate = (route) => {
     navigation.navigate(route);
+  };
+
+  const checkOwnProfile = () => {
+    if (route.params !== undefined) {
+      setIsOwnProfile(false);
+      setProfileData({...route.params});
+      // setProfileData({
+      //   id: route.params.id,
+      //   name: route.params.name,
+      //   city: route.params.city,
+      //   currentActivity: route.params.currentActivity,
+      //   activities: route.params.activities,
+      //   image: route.params.image,
+      // });
+      getActivities(route.params.activities);
+    } else {
+      setIsOwnProfile(true);
+      getProfileData();
+    }
   };
 
   const getProfileData = async () => {
@@ -108,7 +128,7 @@ const Profile = () => {
   // };
 
   useEffect(() => {
-    getProfileData();
+    checkOwnProfile();
   }, []);
 
   const renderMainInfo = (
@@ -167,7 +187,7 @@ const Profile = () => {
       <Header
         title={'Profile'}
         icon={SettingsImg}
-        action={() => stackNavigate('ChooseActivity')}
+        action={isOwnProfile ? () => stackNavigate('ChooseActivity') : null}
       />
       <Image style={s.background} source={GradientImg} />
       <View style={s.avatar}>
