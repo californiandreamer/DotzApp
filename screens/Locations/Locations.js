@@ -1,4 +1,4 @@
-import React, {Fragment, useEffect, useRef, useState} from 'react';
+import React, {Fragment, useEffect, useMemo, useRef, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -40,6 +40,7 @@ const Locations = () => {
   const navigation = useNavigation();
 
   const [locationsData, setLocationsData] = useState([]);
+  console.log('locationsData', locationsData);
   const [openOptions, setOpenOptions] = useState(false);
   const [barVisible, setBarVisible] = useState(false);
   const [barProps, setBarProps] = useState({});
@@ -186,7 +187,10 @@ const Locations = () => {
   };
 
   const addLocaitonRequest = async () => {
-    const currentActivity = await getItem('current_activity');
+    const profileData = await getItem('profile');
+    const parsedProfileData = JSON.parse(profileData);
+    const currentActivity = parsedProfileData.profile_current_act;
+
     const start = JSON.stringify(drawedRouteCoordinates[0]);
     const finish = JSON.stringify(
       drawedRouteCoordinates[drawedRouteCoordinates.length - 1],
@@ -244,7 +248,7 @@ const Locations = () => {
           : 'Drop a Pin on a Place you want to submit',
       type: 'choice',
       action1: () => cancelAdding(),
-      action2: () => setToggle((prev) => !prev),
+      action2: () => setToggle((prev) => !prev), // toggle because function doesn't see state updates
       closeAction: () => cancelAdding(),
     });
   };
@@ -433,6 +437,7 @@ const Locations = () => {
         compassEnabled={false}
         attributionEnabled={false}
         logoEnabled={false}
+        onLongPress={() => setActiveLocation(null)}
         onPress={(e) =>
           routeDrawerActive
             ? drawRoute(e)

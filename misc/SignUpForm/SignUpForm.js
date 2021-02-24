@@ -1,15 +1,16 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import s from './SignUpForm.s';
 import {Image, Text, View} from 'react-native';
 import {TextInput, TouchableOpacity} from 'react-native-gesture-handler';
 import CheckBox from 'react-native-check-box'; // need to delete libary
+import {GoogleSignin, statusCodes} from '@react-native-community/google-signin';
 import {errorsContent} from '../../data';
 import Button from '../Button/Button';
 import GoogleImg from '../../assets/icons/ic-google.png';
 import CheckBoxOnImg from '../../assets/icons/ic-checkOn.png';
 import CheckBoxOffImg from '../../assets/icons/ic-checkOff.png';
 
-const SignUpForm = ({action, onError}) => {
+const SignUpForm = ({action, action2, onError}) => {
   const [emailValue, setEmailValue] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
   const [checkPasswordValue, setCheckPasswordValue] = useState('');
@@ -76,6 +77,44 @@ const SignUpForm = ({action, onError}) => {
     }
   };
 
+  useEffect(() => {
+    GoogleSignin.configure({
+      androidClientId:
+        '538396150269-6skr22agrs9nbheb8g6sc31540p3ldqm.apps.googleusercontent.com',
+      webClientId:
+        '538396150269-6skr22agrs9nbheb8g6sc31540p3ldqm.apps.googleusercontent.com',
+      offlineAccess: false,
+    });
+  }, []);
+
+  const googleSignUp = async () => {
+    console.log('Гугль');
+    const isSignedIn = await GoogleSignin.isSignedIn();
+    const currentUser = await GoogleSignin.getCurrentUser();
+    console.log('isSignedIn', isSignedIn);
+    console.log('currentUser', currentUser);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      console.log('userInfo', userInfo);
+    } catch (error) {
+      console.log('error', error);
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        // user cancelled the login flow
+        console.log('canceled');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        // operation (e.g. sign in) is in progress already
+        console.log('operation in progress');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        // play services not available or outdated
+        console.log('not available');
+      } else {
+        // some other error happened
+        console.log('other error');
+      }
+    }
+  };
+
   return (
     <View style={s.form}>
       <View style={s.wrapper}>
@@ -134,7 +173,10 @@ const SignUpForm = ({action, onError}) => {
         <Button text={'Register'} style={'violet'} action={checkInputs} />
       </View>
       <View style={s.wrapper}>
-        <TouchableOpacity style={s.googleBtn} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={s.googleBtn}
+          activeOpacity={0.8}
+          onPress={() => googleSignUp()}>
           <Image style={s.googleImg} source={GoogleImg} />
         </TouchableOpacity>
       </View>

@@ -54,14 +54,6 @@ const Profile = ({route}) => {
     if (route.params !== undefined) {
       setIsOwnProfile(false);
       setProfileData({...route.params});
-      // setProfileData({
-      //   id: route.params.id,
-      //   name: route.params.name,
-      //   city: route.params.city,
-      //   currentActivity: route.params.currentActivity,
-      //   activities: route.params.activities,
-      //   image: route.params.image,
-      // });
       getActivities(route.params.activities);
     } else {
       setIsOwnProfile(true);

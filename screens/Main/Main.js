@@ -21,6 +21,7 @@ import {
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import BlastPinImg from '../../assets/icons/ic-blast-pin.png';
 import BlastMessageImg from '../../assets/icons/ic-message.png';
+import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 import NextImg from '../../assets/icons/icon-siguiente.png';
 import Alert from '../../misc/Alert/Alert';
 import PopUp from '../../misc/PopUp/PopUp';
@@ -47,6 +48,7 @@ const Main = () => {
   const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
   const [activeUser, setActiveUser] = useState(null);
   console.log('usersData', usersData);
+  console.log('userLocation', userLocation);
 
   const getUserLocationPermision = async () => {
     if (Platform.OS === 'android') {
@@ -60,24 +62,46 @@ const Main = () => {
   };
 
   const connectToSocket = async () => {
+    console.log('connecting');
     const token = await getAccessToken();
     const conn = new WebSocket(`${socketUrl}${token}`);
     const timeStamp = +new Date();
+    const stringedUserLocation = JSON.stringify(userLocation);
+    const stringedTimeStamp = JSON.stringify(timeStamp);
     const obj = {
-      my_cur_loc: userLocation,
-      msg_timestamp_sent: timeStamp,
+      my_cur_loc: stringedUserLocation,
+      msg_timestamp_sent: stringedTimeStamp,
     };
     const stringed = JSON.stringify(obj);
 
+    const headersUserToken = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    const chatHistory = await axiosGet('chat/getChatHistory', headersUserToken);
+    console.log('chatHistory', chatHistory);
+
     conn.onopen = (e) => {
       conn.send(stringed);
+      // const obj = {
+      //   msg: 'Hello!',
+      //   msg_reciever_id: '59',
+      //   msg_timestamp_sent: stringedTimeStamp,
+      //   msg_time_sent: '2021-01-12 08:15:08',
+      // };
+      // conn.send(JSON.stringify(obj));
     };
 
     conn.onmessage = (e) => {
       const data = e.data;
       const parsedData = JSON.parse(data);
-      const users = parsedData.users;
-      setUsersData(users);
+      console.log('onmessage', parsedData);
+      if (parsedData.hasOwnProperty('users')) {
+        const users = parsedData.users;
+        setUsersData(users);
+      }
     };
   };
 
@@ -87,12 +111,15 @@ const Main = () => {
   };
 
   useEffect(() => {
-    connectToSocket();
     getUserLocationPermision();
   }, []);
 
+  useEffect(() => {
+    connectToSocket();
+  }, [userLocation]);
+
   const renderBurger = (
-    <View style={[s.buttonOuter, {left: 16}]}>
+    <View style={[s.buttonOuter, {left: 16}]} key="burger">
       <TouchableOpacity
         style={s.button}
         activeOpacity={0.8}
@@ -103,7 +130,7 @@ const Main = () => {
   );
 
   const renderBlastMessageBtn = (
-    <View style={[s.buttonOuter, {right: 16}]}>
+    <View style={[s.buttonOuter, {right: 16}]} key="blastMessage">
       <TouchableOpacity
         style={s.button}
         activeOpacity={0.8}
@@ -122,66 +149,68 @@ const Main = () => {
   );
 
   const renderBlastPinBtn = (
-    <View style={[s.buttonOuter, {right: 76}]}>
+    <View style={[s.buttonOuter, {right: 76}]} key="blastPin">
       <TouchableOpacity style={s.button} activeOpacity={0.8}>
         <Image style={s.buttonImg} source={BlastPinImg} />
       </TouchableOpacity>
     </View>
   );
 
-  const renderUsers = usersData.map((user) => (
-    <MapboxGL.MarkerView
-      key={user.c_user_id}
-      id={user.c_user_id}
-      coordinate={
-        user.c_user_profile.profile_privacy_buble &&
-        user.c_user_profile.profile_privacy_buble !== 'null'
-          ? JSON.parse(user.c_user_profile.profile_privacy_buble)
-          : defaultLocation
-      }>
-      <View
-        style={[
-          s.mapPopUpInner,
-          {
-            backgroundColor:
-              activeUser === user.c_user_id ? '#141F25' : 'transparent',
-            elevation: activeUser === user.c_user_id ? 15 : 0,
-          },
-        ]}>
-        <TouchableOpacity
-          style={s.mapPopUpBtn}
-          activeOpacity={0.8}
-          onPress={() => setActiveUser(user.c_user_id)}>
-          <Image
-            style={s.mapPopUpImg}
-            source={{
-              uri: `${profileImageUrl}/${user.c_user_profile.profile_img_ava}`,
-            }}
-          />
-        </TouchableOpacity>
-        {activeUser === user.c_user_id ? (
-          <Fragment>
-            <Text style={s.mapPopUpName}>{user.c_name}</Text>
-            <TouchableOpacity
-              style={s.nextBtn}
-              activeOpacity={0.8}
-              onPress={() =>
-                stackPush('Profile', {
-                  id: user.c_user_id,
-                  name: user.c_name,
-                  city: user.c_user_profile.profile_city,
-                  activities: user.c_user_profile.activities,
-                  currentActivity: user.c_user_profile.profile_current_act,
-                  image: user.c_user_profile.profile_img_ava,
-                })
-              }>
-              <Image style={s.nextImg} source={NextImg} />
-            </TouchableOpacity>
-          </Fragment>
-        ) : null}
-      </View>
-    </MapboxGL.MarkerView>
-  ));
+  const renderUsers = usersData.map((user) =>
+    user.my_cur_loc !== null ? (
+      <MapboxGL.MarkerView
+        key={user.c_user_id}
+        id={user.c_user_id}
+        coordinate={JSON.parse(user.my_cur_loc)}>
+        <View
+          style={[
+            s.mapPopUpInner,
+            {
+              backgroundColor:
+                activeUser === user.c_user_id ? '#141F25' : 'transparent',
+              elevation: activeUser === user.c_user_id ? 15 : 0,
+            },
+          ]}>
+          <TouchableOpacity
+            style={s.mapPopUpBtn}
+            activeOpacity={0.8}
+            onPress={() => setActiveUser(user.c_user_id)}>
+            <Image
+              style={s.mapPopUpImg}
+              source={
+                user.c_user_profile !== null &&
+                user.c_user_profile.profile_img_ava !== null
+                  ? {
+                      uri: `${profileImageUrl}/${user.c_user_profile.profile_img_ava}`,
+                    }
+                  : AvatarPlaceholderImg
+              }
+            />
+          </TouchableOpacity>
+          {activeUser === user.c_user_id ? (
+            <Fragment>
+              <Text style={s.mapPopUpName}>{user.c_name}</Text>
+              <TouchableOpacity
+                style={s.nextBtn}
+                activeOpacity={0.8}
+                onPress={() =>
+                  stackPush('Profile', {
+                    id: user.c_user_id,
+                    name: user.c_name,
+                    city: user.c_user_profile.profile_city,
+                    activities: user.c_user_profile.activities,
+                    currentActivity: user.c_user_profile.profile_current_act,
+                    image: user.c_user_profile.profile_img_ava,
+                  })
+                }>
+                <Image style={s.nextImg} source={NextImg} />
+              </TouchableOpacity>
+            </Fragment>
+          ) : null}
+        </View>
+      </MapboxGL.MarkerView>
+    ) : null,
+  );
 
   return (
     <View style={s.container}>
@@ -189,14 +218,14 @@ const Main = () => {
         style={s.map}
         compassEnabled={false}
         attributionEnabled={false}
-        logoEnabled={false}>
+        logoEnabled={false}
+        onLongPress={() => setActiveUser(null)}>
         <MapboxGL.Camera zoomLevel={12} followUserLocation />
         <MapboxGL.UserLocation
-          minDisplacement={10000}
+          minDisplacement={100}
           onUpdate={(e) =>
             setUserLocation([e.coords.longitude, e.coords.latitude])
           }
-          // onUpdate={(e) => handleUserLocation(e)}
         />
         {renderUsers}
       </MapboxGL.MapView>
@@ -235,7 +264,7 @@ const s = StyleSheet.create({
   mapPopUpBtn: {
     width: 50,
     height: 50,
-    padding: 5,
+    padding: 2,
     backgroundColor: '#141F25',
     justifyContent: 'flex-end',
     alignItems: 'center',
@@ -244,7 +273,7 @@ const s = StyleSheet.create({
   mapPopUpImg: {
     width: '100%',
     height: '100%',
-    resizeMode: 'contain',
+    resizeMode: 'cover',
     borderRadius: 100,
   },
   mapPopUpInner: {

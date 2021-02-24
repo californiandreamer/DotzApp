@@ -1,4 +1,4 @@
-package com.dotzapp;
+package com.californianapps.dotzapp;
 
 import android.app.Application;
 import android.content.Context;

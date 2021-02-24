@@ -17,6 +17,11 @@ import Leaderboard from '../Leaderboard/Leaderboard';
 import {mapBoxToken} from '../../api/api';
 import Button from '../Button/Button';
 import BarStatus from '../BarStatus/BarStatus';
+import Rater from '../Rater/Rater';
+import Timer from '../Timer/Timer';
+import {axiosPost} from '../../hooks/useAxios';
+import {getAccessToken} from '../../hooks/useAccessToken';
+import SuccessImg from '../../assets/icons/ic-agreeOn.png';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -31,14 +36,34 @@ const Bar = ({
   records,
   testAction,
 }) => {
+  const ratePath = 'locations/loc_rate';
   const innerHeight = Dimensions.get('window').height;
   const defaultTopVal = innerHeight * 0.66;
   const pan = useRef(new Animated.ValueXY({x: 0, y: 0}));
   const layout = pan.current.getLayout();
 
+  const [timerProps, setTimerProps] = useState({speed: 0});
+  const [barStatusProps, setBarStatusProps] = useState({
+    title,
+    image: activity.activity_img,
+    imageType: 'link',
+  });
   const [barShowed, setBarShowed] = useState(true);
   const [defaultPan, setDefaultPan] = useState(layout.top._value);
   const [defaultOffset, setDefaultOffset] = useState(pan.current.x._offset);
+
+  const renderRater = (
+    <Rater
+      title={title}
+      onChange={(rate) => {
+        rateLocationRequest(rate);
+      }}
+    />
+  );
+  const renderBarStatus = <BarStatus {...barStatusProps} />;
+  const renderTimer = <Timer {...timerProps} />;
+
+  const [activeElement, setActiveElement] = useState(renderBarStatus);
 
   const returnShape = () => {
     const parsedCoordinates = JSON.parse(coordinates);
@@ -53,6 +78,27 @@ const Bar = ({
     const startCoordinates = parsedCoordinates[0];
     return startCoordinates;
   };
+
+  const rateLocationRequest = async (rate) => {
+    const token = await getAccessToken();
+    const headers = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    };
+
+    let postData = new URLSearchParams();
+    postData.append('loc_id', id);
+    postData.append('loc_rating', +rate);
+
+    const request = await axiosPost(ratePath, postData, headers);
+    console.log('request', request);
+  };
+
+  useEffect(() => {
+    setActiveElement(renderBarStatus);
+  }, [barStatusProps]);
 
   const renderResponder = (
     <TouchableOpacity
@@ -78,6 +124,7 @@ const Bar = ({
             style={'orange'}
             customStyle={{height: 39}}
             imageStyle={{borderRadius: 30}}
+            action={() => setActiveElement(renderRater)}
           />
         </View>
         <View style={s.item}>
@@ -86,6 +133,13 @@ const Bar = ({
             style={'orange'}
             customStyle={{height: 39}}
             imageStyle={{borderRadius: 30}}
+            action={() => {
+              setBarStatusProps({
+                title: 'Location saved',
+                image: SuccessImg,
+                imageType: 'image',
+              });
+            }}
           />
         </View>
         <View style={s.item}>
@@ -132,7 +186,11 @@ const Bar = ({
           zoomLevel={14}
           centerCoordinate={returnStartCoordinates()}
         />
-        <MapboxGL.UserLocation />
+        <MapboxGL.UserLocation
+          onUpdate={(e) =>
+            setTimerProps({...timerProps, speed: e.coords.speed / 1.36})
+          }
+        />
         {coordinates ? (
           <MapboxGL.ShapeSource id={id} shape={returnShape()}>
             <MapboxGL.LineLayer
@@ -166,11 +224,7 @@ const Bar = ({
       <View style={s.inner}>
         {renderResponder}
         <ScrollView style={s.scrollBox} scrollEnabled={barShowed}>
-          {/* <Text style={{color: '#fff', fontSize: 20}}>Pan: {defaultPan}</Text>
-          <Text style={{color: '#fff', fontSize: 20}}>
-            Offset: {defaultOffset}
-          </Text> */}
-          <BarStatus title={title} image={activity.activity_img} />
+          {activeElement}
           {renderButtonsRow}
           {/* <View style={s.wrapper}>
             <Text style={s.text}>Your time: 24 min, speed 52 mi/h</Text>
@@ -184,6 +238,13 @@ const Bar = ({
 };
 
 export default Bar;
+
+{
+  /* <Text style={{color: '#fff', fontSize: 20}}>Pan: {defaultPan}</Text>
+          <Text style={{color: '#fff', fontSize: 20}}>
+            Offset: {defaultOffset}
+          </Text> */
+}
 
 // const onMove = (e) => {
 //   setDefaultPan(layout.top._value);

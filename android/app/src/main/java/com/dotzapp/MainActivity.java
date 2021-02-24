@@ -1,4 +1,4 @@
-package com.dotzapp;
+package com.californianapps.dotzapp;
 
 import com.facebook.react.ReactActivity;
 
