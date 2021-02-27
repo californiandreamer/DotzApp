@@ -20,7 +20,7 @@ import DistanceImg from '../../assets/icons/ic-distance.png';
 import PersonImg from '../../assets/icons/Ic-Profile.png';
 import SettingsImg from '../../assets/icons/Ic-Setting.png';
 import LocationImg from '../../assets/icons/ic-Location2.png';
-import {mapBoxToken, profileImageUrl} from '../../api/api';
+import {mapBoxToken, profileImageUrl, socketUrl} from '../../api/api';
 import {getItem, setItem} from '../../hooks/useAsyncStorage';
 import {axiosGet, axiosPost} from '../../hooks/useAxios';
 import {getAccessToken} from '../../hooks/useAccessToken';
@@ -29,6 +29,8 @@ MapboxGL.setAccessToken(mapBoxToken);
 
 const Profile = ({route}) => {
   const path = 'profiles/current_activity';
+  const chatHistoryPath = 'chat/getChatHistory';
+
   const navigation = useNavigation();
   const tabProps = {
     tab1: 'Main info',
@@ -36,10 +38,14 @@ const Profile = ({route}) => {
   };
 
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  console.log('isButtonDisabled', isButtonDisabled);
   const [activeTab, setActiveTab] = useState(tabProps.tab1);
   const [activitiesData, setActivitiesData] = useState([]);
   const [profileData, setProfileData] = useState({});
   const [currentActivity, setCurrentActivity] = useState('1');
+  const [socket, setSocket] = useState(null);
   console.log('currentActivity', currentActivity);
 
   const getActiveTab = (value) => {
@@ -55,9 +61,11 @@ const Profile = ({route}) => {
       setIsOwnProfile(false);
       setProfileData({...route.params});
       getActivities(route.params.activities);
+      checkIsFriend(route.params.id);
     } else {
-      setIsOwnProfile(true);
       getProfileData();
+      setIsOwnProfile(true);
+      setIsButtonVisible(false);
     }
   };
 
@@ -75,6 +83,31 @@ const Profile = ({route}) => {
       image: parsedData.profile_img_ava,
     });
     getActivities(parsedData.activities);
+  };
+
+  const checkIsFriend = async (id) => {
+    const data = await getItem('profile');
+    const parsedData = JSON.parse(data);
+    const profileFriendsList = parsedData.friends;
+    const isFriend = profileFriendsList.some((item) => item.app_user_id === id);
+    console.log('isFriend', isFriend);
+    setIsButtonVisible(!isFriend);
+    checkFriendRequestSended(id);
+  };
+
+  const checkFriendRequestSended = async (id) => {
+    const token = await getAccessToken();
+    const headersUserToken = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    const chatHistory = await axiosGet(chatHistoryPath, headersUserToken);
+    const isRequestExist = chatHistory.some((item) => item.author_id === id);
+    console.log('chatHistory', chatHistory);
+    console.log('isRequestExist', isRequestExist);
+    setIsButtonDisabled(isRequestExist);
   };
 
   const getActivities = async (current) => {
@@ -100,6 +133,26 @@ const Profile = ({route}) => {
     setActivitiesData(currentActivitiesArr);
   };
 
+  const connectToSocket = async () => {
+    const token = await getAccessToken();
+    const conn = new WebSocket(`${socketUrl}${token}`);
+    setSocket(conn);
+  };
+
+  const sendFriendshipRequest = async () => {
+    setIsButtonDisabled(true);
+    const timeStamp = +new Date();
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const obj = {
+      msg: 'Friendship request',
+      msg_reciever_id: profileData.id,
+      msg_timestamp_sent: stringedTimeStamp,
+      friendship_request: 'requested',
+    };
+
+    socket.send(JSON.stringify(obj));
+  };
+
   // const currentActivityRequest = async () => {
   //   const token = await getAccessToken();
   //   const headers = {
@@ -120,6 +173,7 @@ const Profile = ({route}) => {
   // };
 
   useEffect(() => {
+    connectToSocket();
     checkOwnProfile();
   }, []);
 
@@ -137,14 +191,14 @@ const Profile = ({route}) => {
         activities={activitiesData}
         action={(activity) => setCurrentActivity(activity)}
       /> */}
-      <View style={s.rowStartWrapper}>
+      {/* <View style={s.rowStartWrapper}>
         <Text style={s.text}>Miles since registration: 14</Text>
         <Image style={s.image} source={DistanceImg} />
       </View>
       <View style={s.rowStartWrapper}>
         <Text style={s.text}>Largest rideout: 21</Text>
         <Image style={s.image} source={PersonImg} />
-      </View>
+      </View> */}
     </View>
   );
 
@@ -206,9 +260,16 @@ const Profile = ({route}) => {
         <View style={s.wrapper}>
           {activeTab === tabProps.tab1 ? renderMainInfo : renderFeed}
         </View>
-        {/* <View style={s.wrapper}>
-          <Button text={'Add to friends'} style={'orange'} />
-        </View> */}
+        {isButtonVisible ? (
+          <View style={s.wrapper}>
+            <Button
+              text={'Add to friends'}
+              style={'orange'}
+              isDisabled={isButtonDisabled}
+              action={() => sendFriendshipRequest()}
+            />
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );

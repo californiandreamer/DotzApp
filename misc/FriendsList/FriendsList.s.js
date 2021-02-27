@@ -20,7 +20,7 @@ export default StyleSheet.create({
   image: {
     width: 44,
     height: 44,
-    resizeMode: 'contain',
+    resizeMode: 'cover',
     borderRadius: 88,
     // borderWidth: 2,
     borderColor: '#141F25',

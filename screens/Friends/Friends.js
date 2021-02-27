@@ -1,48 +1,131 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ImageBackground, StyleSheet, Text, View} from 'react-native';
 import Header from '../../misc/Header/Header';
 import OrangeGradientImg from '../../assets/images/gradient.jpg';
 import NewFriendImg from '../../assets/icons/ic-new-friend.png';
 import FriendsList from '../../misc/FriendsList/FriendsList';
+import {getAccessToken} from '../../hooks/useAccessToken';
+import {socketUrl} from '../../api/api';
+import {axiosGet, axiosPost} from '../../hooks/useAxios';
+import {getItem} from '../../hooks/useAsyncStorage';
+import {useNavigation} from '@react-navigation/native';
 
 const Friends = () => {
+  const chatHistoryPath = 'chat/getChatHistory';
+
   const [listType, setListType] = useState('Friends');
+  const [friendsList, setFriendsList] = useState([]);
+  const [friendsRequestsList, setFriendsRequestsList] = useState([]);
+  const [socket, setSocket] = useState(null);
+
+  const navigation = useNavigation();
+  const stackPush = (route, params) => {
+    navigation.push(route, params);
+  };
 
   const toggleListType = () => {
-    setListType((prev) =>
-      prev === 'Friends' ? ' Friend requests' : 'Friends',
-    );
+    setListType((prev) => (prev === 'Friends' ? 'Friend requests' : 'Friends'));
   };
 
-  const sendFriendshipRequest = async () => {
+  const getFriendsList = async () => {
+    setFriendsList([]);
+    const profile = await getItem('profile');
+    const parsedProfile = JSON.parse(profile);
+    const friends = parsedProfile.friends;
+    setFriendsList(friends);
+  };
+
+  let initialFriendsRequestsList = [];
+  const getFriendsRequestsList = async () => {
+    setFriendsRequestsList([]);
+    const token = await getAccessToken();
+    const profile = await getItem('profile');
+    const parsedProfile = JSON.parse(profile);
+    const profileFriendsList = parsedProfile.friends;
+
+    const headersUserToken = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    const chatHistory = await axiosGet(chatHistoryPath, headersUserToken);
+    const reversedChatHistory = chatHistory.reverse();
+
+    for (let i = 0; i < reversedChatHistory.length; i++) {
+      const chatItem = reversedChatHistory[i];
+      const senderId = chatItem.author_id;
+      const senderExists = initialFriendsRequestsList.some(
+        (item) => item.author_id === senderId,
+      );
+      const isFirendApproved = profileFriendsList.some(
+        (item) => item.app_user_id === senderId,
+      );
+      const isFriendsRequest = chatItem.request_status === 'requested';
+
+      if (isFriendsRequest && !senderExists && !isFirendApproved) {
+        initialFriendsRequestsList.push(chatItem);
+      }
+    }
+
+    setFriendsRequestsList(initialFriendsRequestsList);
+  };
+
+  const connectToSocket = async () => {
     const token = await getAccessToken();
     const conn = new WebSocket(`${socketUrl}${token}`);
-    const timeStamp = +new Date();
-    const stringedTimeStamp = JSON.stringify(timeStamp);
-    const date = new Date().toISOString();
-
-    conn.onopen = (e) => {
-      const obj = {
-        msg: 'Запрос в друзья DENIED',
-        msg_reciever_id: interlocutorId,
-        msg_timestamp_sent: stringedTimeStamp,
-        msg_time_sent: date,
-        friendship_request: 'denied',
-      };
-      conn.send(JSON.stringify(obj));
-    };
+    setSocket(conn);
   };
+
+  const approveFrendship = async (id) => {
+    const token = await getAccessToken();
+    const headers = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    };
+
+    let postData = new URLSearchParams();
+    postData.append('app_user_id', id);
+    postData.append('profile_rel_status', 'friends');
+
+    const req = await axiosPost('profile/frineds/add', postData, headers);
+    console.log('req', req);
+
+    getFriendsList();
+    getFriendsRequestsList();
+  };
+
+  useEffect(() => {
+    getFriendsList();
+    getFriendsRequestsList();
+    connectToSocket();
+  }, []);
+
+  useEffect(() => {
+    getFriendsList();
+    getFriendsRequestsList();
+  }, [listType]);
 
   return (
     <ImageBackground style={s.container} source={OrangeGradientImg}>
       <Header
         title={listType}
         icon={NewFriendImg}
-        quantity={1}
+        quantity={friendsRequestsList.length}
         action={toggleListType}
       />
       <View style={s.wrapper}>
-        <FriendsList type={listType} />
+        <FriendsList
+          list={
+            listType === 'Friend requests' ? friendsRequestsList : friendsList
+          }
+          type={listType}
+          approveFrendshipAction={(id) => approveFrendship(id)}
+          showProfileAction={(route, params) => stackPush(route, params)}
+          showChatAction={(route, params) => stackPush(route, params)}
+        />
       </View>
     </ImageBackground>
   );

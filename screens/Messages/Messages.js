@@ -56,6 +56,7 @@ const Messages = () => {
     conn.onmessage = (e) => {
       const data = e.data;
       const parsedData = JSON.parse(data);
+      console.log('parsedData', parsedData);
 
       if (parsedData.hasOwnProperty('message')) {
         placeNewMessage(parsedData);

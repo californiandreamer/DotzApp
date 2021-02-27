@@ -36,7 +36,7 @@ const DrawerNavigator = () => {
 
   return (
     <Drawer.Navigator
-      initialRouteName="Locations"
+      initialRouteName="Messages"
       drawerStyle={{backgroundColor: '#F18303', opacity: 0.9}}
       drawerContentOptions={{
         labelStyle: {
@@ -79,14 +79,14 @@ const DrawerNavigator = () => {
           drawerIcon: () => <Image style={iconStyle} source={LocationIcon} />,
         }}
       />
-      {/* <Drawer.Screen
+      <Drawer.Screen
         name="FilteredLocations"
         component={FilteredLocations}
         options={{
           drawerLabel: 'Saved',
           drawerIcon: () => <Image style={iconStyle} source={SavedIcon} />,
         }}
-      /> */}
+      />
       <Drawer.Screen name="Main" component={Main} />
       <Drawer.Screen name="Cities" component={Cities} />
       <Drawer.Screen name="Leaderboard" component={Leaderboard} />

@@ -6,6 +6,7 @@ import {useNavigation} from '@react-navigation/native';
 
 const ChatList = ({list, action}) => {
   const navigation = useNavigation();
+  console.log('list', list);
 
   const stackNavigate = (route, params) => {
     navigation.navigate(route, params);
