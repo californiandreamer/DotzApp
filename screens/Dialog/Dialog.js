@@ -1,83 +1,219 @@
-import React from 'react';
-import {Image, ScrollView, StyleSheet, Text, View} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  Animated,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Keyboard,
+} from 'react-native';
 import {TextInput, TouchableOpacity} from 'react-native-gesture-handler';
 import Header from '../../misc/Header/Header';
 import ArrowCircleImg from '../../assets/icons/ic-Arrow-Left-Circle.png';
 import {getAccessToken} from '../../hooks/useAccessToken';
+import {getItem} from '../../hooks/useAsyncStorage';
+import {axiosGet} from '../../hooks/useAxios';
+import {socketUrl} from '../../api/api';
 
-const Dialog = () => {
-  const conn = new WebSocket(
-    `ws://admin.officialdotzapp.com:8088?access_token=9289e45d82eda45041c1a2ac78b06fa7bb46c403`,
-  );
+const Dialog = ({route}) => {
+  const [userId, setUserId] = useState([]);
+  const [messageValue, setMessageValue] = useState('');
+  const [messagesList, setMessagesList] = useState([]);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  console.log('messagesList', messagesList);
 
-  // on server knocking
-  conn.onopen = function (e) {
-    console.log('onOpen', e);
+  let initialMessagesList = [];
+  const chatHistoryPath = 'chat/getChatHistory';
+  const scrollRef = useRef(null);
+  const rotateValue = useRef(new Animated.Value(0)).current;
+  const spin = rotateValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['-90deg', '0deg'],
+  });
+
+  const rotateButton = (val) => {
+    Animated.timing(rotateValue, {
+      toValue: val,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
   };
 
-  // in data I can see all users
-  conn.onmessage = function (e) {
-    console.log('onMessage', e);
-  };
+  const interlocutorId = route.params.id;
+  const interlocutorName = route.params.name;
 
-  const connectToWebSocket = async () => {
-    // const token = await getAccessToken();
-    // console.log('cosTam', token);
-    let time_sent = new Date();
-    const obj = {
-      msg_reciever_id: '34',
-      msg: 'Hello!',
-      msg_timestamp_sent: time_sent.getTime(),
-      msg_time_sent: time_sent.toMysqlFormat(),
+  const getChatHistory = async () => {
+    const token = await getAccessToken();
+    const profile = await getItem('profile');
+    const parsedProfile = JSON.parse(profile);
+    const profileUserId = parsedProfile.app_user_id;
+    setUserId(profileUserId);
+
+    const headersUserToken = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     };
-    const stringed = JSON.stringify(obj);
-    conn.send(stringed);
+
+    const chatHistory = await axiosGet(chatHistoryPath, headersUserToken);
+
+    for (let i = 0; i < chatHistory.length; i++) {
+      const chatItem = chatHistory[i];
+      const senderId = chatItem.author_id;
+      const receiverId = chatItem.msg_reciever_id;
+
+      if (senderId === interlocutorId || receiverId === interlocutorId) {
+        initialMessagesList.push(chatItem);
+      }
+    }
+
+    setMessagesList(initialMessagesList);
+    connectToSocket(token);
   };
 
-  function twoDigits(d) {
-    if (0 <= d && d < 10) return '0' + d.toString();
-    if (-10 < d && d < 0) return '-0' + (-1 * d).toString();
-    return d.toString();
-  }
+  const connectToSocket = async (token) => {
+    const conn = new WebSocket(`${socketUrl}${token}`);
+    let mounted = true;
 
-  Date.prototype.toMysqlFormat = function () {
-    return (
-      this.getFullYear() +
-      '-' +
-      twoDigits(1 + this.getMonth()) +
-      '-' +
-      twoDigits(this.getDate()) +
-      ' ' +
-      twoDigits(this.getHours()) +
-      ':' +
-      twoDigits(this.getMinutes()) +
-      ':' +
-      twoDigits(this.getSeconds())
-    );
+    conn.onmessage = (e) => {
+      const data = e.data;
+      const parsedData = JSON.parse(data);
+      if (parsedData.hasOwnProperty('message')) {
+        setMessagesList((prev) => [...prev, {...parsedData}]);
+      }
+    };
   };
+
+  const sendMessage = async () => {
+    const token = await getAccessToken();
+    const conn = new WebSocket(`${socketUrl}${token}`);
+    const timeStamp = +new Date();
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const date = new Date().toISOString();
+
+    conn.onopen = (e) => {
+      const obj = {
+        msg: messageValue,
+        msg_reciever_id: interlocutorId,
+        msg_timestamp_sent: stringedTimeStamp,
+        msg_time_sent: date,
+      };
+      conn.send(JSON.stringify(obj));
+    };
+
+    setMessagesList([
+      ...messagesList,
+      {
+        msg_id: generateMessageId(),
+        author_id: userId,
+        author_name: interlocutorName,
+        message: messageValue,
+        msg_reciever_id: interlocutorId,
+        msg_timestamp_sent: stringedTimeStamp,
+        msg_time_sent: date,
+      },
+    ]);
+    setMessageValue('');
+    scrollingDown();
+  };
+
+  const generateMessageId = () => {
+    const listLenght = messagesList.length;
+    const lastItem = messagesList[listLenght - 1];
+    const idValue = lastItem.msg_id;
+    const parsedIdValue = parseInt(idValue);
+    const newId = parsedIdValue + 1;
+    const stringedNewId = newId.toString();
+    return stringedNewId;
+  };
+
+  const handleScroll = () => {
+    Keyboard.dismiss();
+  };
+
+  const scrollingDown = async () => {
+    setTimeout(() => {
+      scrollRef.current.scrollToEnd({animated: true});
+    }, 0);
+  };
+
+  useEffect(() => {
+    getChatHistory();
+  }, []);
+
+  useEffect(() => {
+    scrollingDown();
+  }, [messagesList]);
+
+  useEffect(() => {
+    if (messageValue !== '') {
+      rotateButton(1);
+      setIsButtonDisabled(false);
+    } else {
+      rotateButton(0);
+      setIsButtonDisabled(true);
+    }
+  }, [messageValue]);
+
+  const renderInputArea = (
+    <View style={s.inputArea}>
+      <TextInput
+        style={s.input}
+        value={messageValue}
+        placeholder="Message here..."
+        onFocus={() => {
+          rotateButton(1);
+        }}
+        onEndEditing={() => (messageValue === '' ? rotateButton(0) : null)}
+        onChange={(e) => {
+          e.persist();
+          setMessageValue(e.nativeEvent.text);
+        }}
+      />
+      <TouchableOpacity
+        style={s.button}
+        activeOpacity={0.8}
+        disabled={isButtonDisabled}
+        onPress={() => sendMessage()}
+        // onPress={() => sendMessage()}
+      >
+        <Animated.Image
+          style={[
+            s.buttonImg,
+            {transform: [{rotate: spin}], opacity: isButtonDisabled ? 0.7 : 1},
+          ]}
+          source={ArrowCircleImg}
+        />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={s.container}>
-      <Header title={'Maciej Kowalski'} style={'orange'} />
+      <Header title={interlocutorName} style={'orange'} />
       <View style={s.wrapper}>
         <View style={s.chat}>
-          <ScrollView style={s.messages} showsVerticalScrollIndicator={false}>
-            <View style={s.item}>
-              <View style={s.inner}>
-                <Text style={s.text}>Some message...</Text>
+          <ScrollView
+            style={s.messages}
+            showsVerticalScrollIndicator={false}
+            ref={scrollRef}
+            onScroll={handleScroll}>
+            {messagesList.map((message) => (
+              <View
+                style={[
+                  s.item,
+                  message.author_id === userId ? s.user : s.interlocutor,
+                ]}
+                key={message.msg_id}>
+                <View style={s.inner}>
+                  <Text style={s.text}>{message.message}</Text>
+                </View>
               </View>
-            </View>
+            ))}
           </ScrollView>
         </View>
-        <View style={s.inputArea}>
-          <TextInput style={s.input} placeholder="Message here..." />
-          <TouchableOpacity
-            style={s.button}
-            activeOpacity={0.8}
-            onPress={connectToWebSocket}>
-            <Image style={s.buttonImg} source={ArrowCircleImg} />
-          </TouchableOpacity>
-        </View>
+        {renderInputArea}
       </View>
     </View>
   );
@@ -117,6 +253,12 @@ const s = StyleSheet.create({
     borderRadius: 8,
     // borderBottomLeftRadius: 0,
   },
+  interlocutor: {
+    alignItems: 'flex-start',
+  },
+  user: {
+    alignItems: 'flex-end',
+  },
   inputArea: {
     height: 50,
     paddingHorizontal: 3,
@@ -138,6 +280,10 @@ const s = StyleSheet.create({
   },
   button: {
     width: 50,
+  },
+  disabled: {
+    width: 50,
+    opacity: 0.7,
   },
   buttonImg: {
     width: 50,

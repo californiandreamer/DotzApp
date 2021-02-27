@@ -85,13 +85,6 @@ const Main = () => {
 
     conn.onopen = (e) => {
       conn.send(stringed);
-      // const obj = {
-      //   msg: 'Hello!',
-      //   msg_reciever_id: '59',
-      //   msg_timestamp_sent: stringedTimeStamp,
-      //   msg_time_sent: '2021-01-12 08:15:08',
-      // };
-      // conn.send(JSON.stringify(obj));
     };
 
     conn.onmessage = (e) => {

@@ -22,6 +22,7 @@ import Timer from '../Timer/Timer';
 import {axiosPost} from '../../hooks/useAxios';
 import {getAccessToken} from '../../hooks/useAccessToken';
 import SuccessImg from '../../assets/icons/ic-agreeOn.png';
+import {getItem, setItem} from '../../hooks/useAsyncStorage';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -96,6 +97,74 @@ const Bar = ({
     console.log('request', request);
   };
 
+  let initialFavoriteLocations = [];
+  const saveLocation = async () => {
+    const token = await getAccessToken();
+    const headers = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    };
+    const updateFavoritesPath = 'profiles/favourite_add';
+    const profileData = await getItem('profile');
+    let parsedProfileData = JSON.parse(profileData);
+    let favoriteLocaitons = parsedProfileData.profile_favourite_locs;
+
+    if (favoriteLocaitons !== null) {
+      const isExist = checkItemExistsInArray(favoriteLocaitons, id);
+      if (isExist) {
+        removeItemFromArray(favoriteLocaitons, id);
+      } else {
+        addItemToArray(favoriteLocaitons, id);
+      }
+      parsedProfileData.profile_favourite_locs = favoriteLocaitons;
+      // const res = await axiosPost(
+      //   updateFavoritesPath,
+      //   favoriteLocaitons,
+      //   headers,
+      // );
+      // console.log('res', favoriteLocaitons);
+    } else {
+      addItemToArray(initialFavoriteLocations, id);
+      parsedProfileData.profile_favourite_locs = initialFavoriteLocations;
+      // const res = await axiosPost(
+      //   updateFavoritesPath,
+      //   initialFavoriteLocations,
+      //   headers,
+      // );
+      // console.log('res', initialFavoriteLocations);
+    }
+
+    const stringedProfileData = JSON.stringify(parsedProfileData);
+    await setItem('profile', stringedProfileData);
+
+    setBarStatusProps({
+      title: 'Location saved',
+      image: SuccessImg,
+      imageType: 'image',
+    });
+  };
+
+  const addItemToArray = (arr, item) => {
+    arr.push(item);
+    return arr;
+  };
+
+  const removeItemFromArray = (arr, item) => {
+    const index = arr.indexOf(item);
+    if (index > -1) {
+      arr.splice(index, 1);
+    }
+    return arr;
+  };
+
+  const checkItemExistsInArray = (arr, item) => {
+    console.log('arr', arr);
+    const res = arr.includes(item);
+    return res;
+  };
+
   useEffect(() => {
     setActiveElement(renderBarStatus);
   }, [barStatusProps]);
@@ -133,13 +202,7 @@ const Bar = ({
             style={'orange'}
             customStyle={{height: 39}}
             imageStyle={{borderRadius: 30}}
-            action={() => {
-              setBarStatusProps({
-                title: 'Location saved',
-                image: SuccessImg,
-                imageType: 'image',
-              });
-            }}
+            action={() => saveLocation()}
           />
         </View>
         <View style={s.item}>

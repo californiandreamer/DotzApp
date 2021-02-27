@@ -5,7 +5,6 @@ import BikeActivityImg from '../../assets/icons/ic-bike-riding.png';
 import {activitiesImageUrl} from '../../api/api';
 
 const BarStatus = ({title, image, imageType}) => {
-  console.log('image', image);
   const imageUrl = `${activitiesImageUrl}/${image}`;
 
   const rotatingVal = useRef(new Animated.Value(0)).current;

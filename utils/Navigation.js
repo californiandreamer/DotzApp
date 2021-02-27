@@ -14,7 +14,7 @@ import Messages from '../screens/Messages/Messages';
 import Dialog from '../screens/Dialog/Dialog';
 import Friends from '../screens/Friends/Friends';
 import Locations from '../screens/Locations/Locations';
-import SavedLocations from '../screens/SavedLocations/SavedLocations';
+import FilteredLocations from '../screens/FilteredLocations/FilteredLocations';
 import Cities from '../screens/Cities/Cities';
 import Leaderboard from '../screens/Leaderboard/Leaderboard';
 import MessageIcon from '../assets/icons/Ic-Message2.png';
@@ -79,14 +79,14 @@ const DrawerNavigator = () => {
           drawerIcon: () => <Image style={iconStyle} source={LocationIcon} />,
         }}
       />
-      <Drawer.Screen
-        name="SavedLocations"
-        component={SavedLocations}
+      {/* <Drawer.Screen
+        name="FilteredLocations"
+        component={FilteredLocations}
         options={{
           drawerLabel: 'Saved',
           drawerIcon: () => <Image style={iconStyle} source={SavedIcon} />,
         }}
-      />
+      /> */}
       <Drawer.Screen name="Main" component={Main} />
       <Drawer.Screen name="Cities" component={Cities} />
       <Drawer.Screen name="Leaderboard" component={Leaderboard} />

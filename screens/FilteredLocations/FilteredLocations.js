@@ -4,17 +4,22 @@ import Header from '../../misc/Header/Header';
 import HeadLine from '../../misc/HeadLine/HeadLine';
 import LocationsList from '../../misc/LocationsList/LocationsList';
 
-const SavedLocations = () => {
+const FilteredLocations = ({route}) => {
+  const data = route.params.data;
+  const value = route.params.filterValue;
+
+  const filteredData = data.filter((item) => item.loc_city === value);
+
   return (
     <ScrollView style={s.container}>
       <Header />
-      <HeadLine title={'Saved Locations'} subtitle={''} />
-      <LocationsList />
+      <HeadLine title={value} subtitle={''} />
+      <LocationsList locations={filteredData} />
     </ScrollView>
   );
 };
 
-export default SavedLocations;
+export default FilteredLocations;
 
 const s = StyleSheet.create({
   container: {

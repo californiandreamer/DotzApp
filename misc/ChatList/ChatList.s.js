@@ -39,7 +39,7 @@ export default StyleSheet.create({
     color: '#9B9B9B',
   },
   time: {
-    width: '15%',
+    width: '20%',
     height: '100%',
     alignItems: 'flex-end',
   },
