@@ -36,7 +36,7 @@ const DrawerNavigator = () => {
 
   return (
     <Drawer.Navigator
-      initialRouteName="Messages"
+      initialRouteName="Main"
       drawerStyle={{backgroundColor: '#F18303', opacity: 0.9}}
       drawerContentOptions={{
         labelStyle: {
@@ -110,6 +110,7 @@ const Navigation = () => (
       <Stack.Screen name="Main" component={Main} />
       <Stack.Screen name="Dialog" component={Dialog} />
       <Drawer.Screen name="Profile" component={Profile} />
+      <Drawer.Screen name="FilteredLocations" component={FilteredLocations} />
     </Stack.Navigator>
   </NavigationContainer>
 );

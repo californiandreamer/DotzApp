@@ -1,20 +1,72 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, StyleSheet} from 'react-native';
+import {getHeadersWithAccessToken} from '../../hooks/useAccessToken';
+import {getItem} from '../../hooks/useAsyncStorage';
+import {axiosGet} from '../../hooks/useAxios';
 import Header from '../../misc/Header/Header';
 import HeadLine from '../../misc/HeadLine/HeadLine';
 import LocationsList from '../../misc/LocationsList/LocationsList';
+import {errorsContent} from '../../data';
 
 const FilteredLocations = ({route}) => {
-  const data = route.params.data;
-  const value = route.params.filterValue;
+  const path = '/locations';
 
-  const filteredData = data.filter((item) => item.loc_city === value);
+  const [locations, setLocations] = useState([]);
+  const [subtitle, setSubtitle] = useState('');
+
+  const checkRoureParams = () => {
+    console.log('log');
+    if (route.params !== undefined) {
+      filterLocations();
+    } else {
+      getFavoriteLocations();
+    }
+  };
+
+  const filterLocations = () => {
+    setSubtitle('');
+    const data = route.params.data;
+    const value = route.params.filterValue;
+
+    const filteredData = data.filter((item) => item.loc_city === value);
+    console.log('filteredData', filteredData);
+    setLocations(filteredData);
+  };
+
+  const getFavoriteLocations = async () => {
+    const profileData = await getItem('profile');
+    const parsedProfileData = JSON.parse(profileData);
+    const favoriteLocations = parsedProfileData.profile_favourite_locs;
+    if (favoriteLocations !== null) {
+      returnLocations(favoriteLocations);
+    } else {
+      setSubtitle(errorsContent.noLocations.title);
+    }
+  };
+
+  let initialLocationsArr = [];
+  const returnLocations = async (arr) => {
+    const headers = await getHeadersWithAccessToken();
+    const locationsList = await axiosGet(path, headers);
+    for (let i = 0; i < arr.length; i++) {
+      const id = arr[i];
+      const findedLocation = locationsList.find((item) => item.loc_id === id);
+      if (findedLocation) {
+        initialLocationsArr.push(findedLocation);
+      }
+    }
+    setLocations(initialLocationsArr);
+  };
+
+  useEffect(() => {
+    checkRoureParams();
+  }, []);
 
   return (
-    <ScrollView style={s.container}>
+    <ScrollView style={s.container} onTouchEnd={checkRoureParams}>
       <Header />
-      <HeadLine title={value} subtitle={''} />
-      <LocationsList locations={filteredData} />
+      <HeadLine title={'Saved'} subtitle={subtitle} />
+      <LocationsList locations={locations} />
     </ScrollView>
   );
 };

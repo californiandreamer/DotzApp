@@ -91,6 +91,9 @@ export const errorsContent = {
     title: 'Registration error',
     text: 'Something went wrong. Check your values and try again.',
   },
+  noLocations: {
+    title: "You don't have any saved locations",
+  },
 };
 
 export const privacyBubbleContent = {

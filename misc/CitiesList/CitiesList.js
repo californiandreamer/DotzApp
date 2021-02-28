@@ -16,8 +16,8 @@ const CitiesList = ({locations, allLocations}) => {
   };
 
   const navigation = useNavigation();
-  const stackNavigate = (route, params) => {
-    navigation.navigate(route, params);
+  const stackPush = (route, params) => {
+    navigation.push(route, params);
   };
 
   return (
@@ -35,7 +35,7 @@ const CitiesList = ({locations, allLocations}) => {
           activeOpacity={0.8}
           key={index}
           onPress={() =>
-            stackNavigate('FilteredLocations', {
+            stackPush('FilteredLocations', {
               data: allLocations,
               filterValue: location.loc_city,
             })

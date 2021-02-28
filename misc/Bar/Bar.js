@@ -100,6 +100,7 @@ const Bar = ({
   let initialFavoriteLocations = [];
   const saveLocation = async () => {
     const token = await getAccessToken();
+    let postData = new URLSearchParams();
     const headers = {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -113,27 +114,24 @@ const Bar = ({
 
     if (favoriteLocaitons !== null) {
       const isExist = checkItemExistsInArray(favoriteLocaitons, id);
+      console.log('isExist', isExist);
       if (isExist) {
         removeItemFromArray(favoriteLocaitons, id);
       } else {
         addItemToArray(favoriteLocaitons, id);
       }
       parsedProfileData.profile_favourite_locs = favoriteLocaitons;
-      // const res = await axiosPost(
-      //   updateFavoritesPath,
-      //   favoriteLocaitons,
-      //   headers,
-      // );
-      // console.log('res', favoriteLocaitons);
+
+      postData.append('favourite_locs', favoriteLocaitons);
+
+      const res = await axiosPost(updateFavoritesPath, postData, headers);
     } else {
       addItemToArray(initialFavoriteLocations, id);
       parsedProfileData.profile_favourite_locs = initialFavoriteLocations;
-      // const res = await axiosPost(
-      //   updateFavoritesPath,
-      //   initialFavoriteLocations,
-      //   headers,
-      // );
-      // console.log('res', initialFavoriteLocations);
+
+      postData.append('favourite_locs', initialFavoriteLocations);
+
+      const res = await axiosPost(updateFavoritesPath, postData, headers);
     }
 
     const stringedProfileData = JSON.stringify(parsedProfileData);

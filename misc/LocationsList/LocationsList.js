@@ -5,6 +5,7 @@ import StarImg from '../../assets/icons/ic-star2.png';
 import ArrowRightImg from '../../assets/icons/ic-forward.png';
 
 const LocationsList = ({title, locations}) => {
+  console.log('locations', locations);
   return (
     <View style={s.container}>
       {title ? (
