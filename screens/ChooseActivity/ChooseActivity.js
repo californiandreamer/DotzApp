@@ -4,52 +4,60 @@ import {useNavigation} from '@react-navigation/native';
 import Button from '../../misc/Button/Button';
 import Changer from '../../misc/Changer/Changer';
 import {axiosGet, axiosPost} from '../../hooks/useAxios';
-import {getAccessToken} from '../../hooks/useAccessToken';
-import {activities} from '../../data';
 import {getItem, setItem} from '../../hooks/useAsyncStorage';
+import {activitiesPath, updateCurrentActivityPath} from '../../api/routes';
+import {getHeadersWithToken} from '../../hooks/useApiData';
 
 const ChooseActivity = () => {
-  const path = 'profiles/current_activity';
   const navigation = useNavigation();
 
   const [activitiesData, setActivitiesData] = useState([]);
-  const [currentActivity, setCurrentActivity] = useState('1');
+  const [currentActivity, setCurrentActivity] = useState('4');
 
   const stackNavigate = (route) => {
     navigation.navigate(route);
   };
 
-  const getProfileActivity = async () => {
-    const profileData = await getItem('profile');
-    const parsedData = JSON.parse(profileData);
-    setCurrentActivity(parsedData.profile_current_act);
-    getActivities();
+  const getActivities = async () => {
+    const request = await axiosGet(activitiesPath);
+    filterUserActivities(request);
   };
 
-  const getActivities = async () => {
-    const activitiesPath = 'activities?activities=[]';
-    const request = await axiosGet(activitiesPath);
-    setActivitiesData(request);
+  const filterUserActivities = async (arr) => {
+    let initialActivitiesArr = [];
+    const profileData = await getItem('profile');
+    const parsedData = JSON.parse(profileData);
+    const activities = parsedData.activities;
+
+    for (let i = 0; i < activities.length; i++) {
+      const activitiesItem = activities[i];
+      const findedActivity = arr.find(
+        (item) => item.activity_id === activitiesItem,
+      );
+      initialActivitiesArr.push(findedActivity);
+    }
+    setActivitiesData(initialActivitiesArr);
+    await getProfileActivity(parsedData);
+  };
+
+  const getProfileActivity = async (data) => {
+    setCurrentActivity(data.profile_current_act);
   };
 
   const currentActivityRequest = async () => {
-    const token = await getAccessToken();
-    const headers = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    };
+    const headers = await getHeadersWithToken('urlencoded');
 
     let postData = new URLSearchParams();
     postData.append('profile_current_act', currentActivity);
 
+    const request = await axiosPost(
+      updateCurrentActivityPath,
+      postData,
+      headers,
+    );
+
     await setItem('current_activity', currentActivity);
-
-    const request = await axiosPost(path, postData, headers);
-
-    saveCurrentActivity();
-
+    await saveCurrentActivity();
     stackNavigate('Root');
   };
 
@@ -62,7 +70,7 @@ const ChooseActivity = () => {
   };
 
   useEffect(() => {
-    getProfileActivity();
+    getActivities();
   }, []);
 
   return (

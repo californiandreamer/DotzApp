@@ -6,26 +6,24 @@ import {socketUrl} from '../../api/api';
 import {axiosGet} from '../../hooks/useAxios';
 import {getAccessToken} from '../../hooks/useAccessToken';
 import {getItem} from '../../hooks/useAsyncStorage';
+import {getHeadersWithToken} from '../../hooks/useApiData';
+import {chatHistoryPath} from '../../api/routes';
 
 const Messages = () => {
-  const [chatList, setChatList] = useState([]);
-
   let initialChatList = [];
-  const chatHistoryPath = 'chat/getChatHistory';
+
+  const [chatList, setChatList] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const getChatHistory = async () => {
+    setRefreshing(true);
     const token = await getAccessToken();
+    const headers = await getHeadersWithToken();
     const profile = await getItem('profile');
     const parsedProfile = JSON.parse(profile);
     const userId = parsedProfile.app_user_id;
 
-    const headersUserToken = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-
-    const chatHistory = await axiosGet(chatHistoryPath, headersUserToken);
+    const chatHistory = await axiosGet(chatHistoryPath, headers);
     const reversedChatHistory = chatHistory.reverse();
 
     for (let i = 0; i < reversedChatHistory.length; i++) {
@@ -34,16 +32,19 @@ const Messages = () => {
       const senderExists = initialChatList.some(
         (item) => item.author_id === senderId,
       );
-      if (!senderExists) {
+      if (!senderExists && senderId !== userId) {
         initialChatList.push(chatItem);
       }
     }
 
     connectToSocket(token);
     setChatList(initialChatList);
+    setRefreshing(false);
   };
 
   const placeNewMessage = (data) => {
+    setChatList([]);
+    console.log('data', data);
     const senderId = data.author_id;
     const index = initialChatList.map((x) => x.author_id).indexOf(senderId);
     initialChatList[index] = data;
@@ -56,31 +57,12 @@ const Messages = () => {
     conn.onmessage = (e) => {
       const data = e.data;
       const parsedData = JSON.parse(data);
-      console.log('parsedData', parsedData);
 
       if (parsedData.hasOwnProperty('message')) {
         placeNewMessage(parsedData);
       }
     };
   };
-
-  // const sendMessage = async () => {
-  //   console.log('sending message');
-  //   const token = await getAccessToken();
-  //   const conn = new WebSocket(`${socketUrl}${token}`);
-  //   const timeStamp = +new Date();
-  //   const stringedTimeStamp = JSON.stringify(timeStamp);
-
-  //   conn.onopen = (e) => {
-  //     const obj = {
-  //       msg: 'Hello! This is test answer from 51 account...',
-  //       msg_reciever_id: '59',
-  //       msg_timestamp_sent: stringedTimeStamp,
-  //       msg_time_sent: '2021-02-24 15:00:00',
-  //     };
-  //     conn.send(JSON.stringify(obj));
-  //   };
-  // };
 
   useEffect(() => {
     getChatHistory();
@@ -90,7 +72,11 @@ const Messages = () => {
     <View style={s.container}>
       <Header title={'Messages'} style={'orange'} />
       <View style={s.wrapper}>
-        <ChatList list={chatList} />
+        <ChatList
+          list={chatList}
+          refreshing={refreshing}
+          onRefresh={getChatHistory}
+        />
       </View>
     </View>
   );

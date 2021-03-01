@@ -1,4 +1,4 @@
-import React, {Fragment, useEffect, useRef, useState} from 'react';
+import React, {Fragment, useEffect, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,39 +8,36 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import * as turf from '@turf/turf';
 // import * as turf from '@turf/helpers'; // need to remove ?
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {useNavigation, DrawerActions} from '@react-navigation/native';
-import {
-  activitiesImageUrl,
-  mapBoxToken,
-  profileImageUrl,
-  socketUrl,
-} from '../../api/api';
+import {getAccessToken} from '../../hooks/useAccessToken';
+import {getHeadersWithToken} from '../../hooks/useApiData';
+import {mapBoxToken, profileImageUrl, socketUrl} from '../../api/api';
+import Alert from '../../misc/Alert/Alert';
+import PopUp from '../../misc/PopUp/PopUp';
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import BlastPinImg from '../../assets/icons/ic-blast-pin.png';
 import BlastMessageImg from '../../assets/icons/ic-message.png';
 import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 import NextImg from '../../assets/icons/icon-siguiente.png';
-import Alert from '../../misc/Alert/Alert';
-import PopUp from '../../misc/PopUp/PopUp';
+import {getItem} from '../../hooks/useAsyncStorage';
+import {axiosGet} from '../../hooks/useAxios';
 import {
-  getAccessToken,
-  getHeadersWithAccessToken,
-} from '../../hooks/useAccessToken';
-import {axiosGet, axiosPost} from '../../hooks/useAxios';
-import {defaultLocation} from '../../data';
+  activitiesImagePath,
+  activitiesPath,
+  profileImagePath,
+} from '../../api/routes';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
 const Main = () => {
-  const path = '/locations';
   const navigation = useNavigation();
 
   const [usersData, setUsersData] = useState([]);
   const [userLocation, setUserLocation] = useState([]);
-  const [accessToken, setAccessToken] = useState('');
+  const [userId, setUserId] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [alertVisible, setAlertVisible] = useState(false);
   const [popUpVisible, setPopUpVisible] = useState(false);
   const [popUpProps, setPopUpProps] = useState({});
@@ -48,7 +45,7 @@ const Main = () => {
   const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
   const [activeUser, setActiveUser] = useState(null);
   console.log('usersData', usersData);
-  console.log('userLocation', userLocation);
+  console.log('userId', userId);
 
   const getUserLocationPermision = async () => {
     if (Platform.OS === 'android') {
@@ -57,13 +54,24 @@ const Main = () => {
     }
   };
 
+  const getUserId = async () => {
+    const profile = await getItem('profile');
+    const parsedProfile = JSON.parse(profile);
+    setUserId(parsedProfile.app_user_id);
+  };
+
+  const getActivities = async () => {
+    const request = await axiosGet(activitiesPath);
+    setActivities(request);
+  };
+
   const stackPush = (route, params) => {
     navigation.push(route, params);
   };
 
   const connectToSocket = async () => {
-    console.log('connecting');
     const token = await getAccessToken();
+    const headers = await getHeadersWithToken();
     const conn = new WebSocket(`${socketUrl}${token}`);
     const timeStamp = +new Date();
     const stringedUserLocation = JSON.stringify(userLocation);
@@ -73,15 +81,6 @@ const Main = () => {
       msg_timestamp_sent: stringedTimeStamp,
     };
     const stringed = JSON.stringify(obj);
-
-    const headersUserToken = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-
-    const chatHistory = await axiosGet('chat/getChatHistory', headersUserToken);
-    console.log('chatHistory', chatHistory);
 
     conn.onopen = (e) => {
       conn.send(stringed);
@@ -98,12 +97,41 @@ const Main = () => {
     };
   };
 
+  const checkFriendship = (user) => {
+    const usersFriends = user.c_user_profile.friends;
+    const isFriend = usersFriends.some((item) => item.app_user_id === userId);
+    const userCurrentActivity = user.c_user_profile.profile_current_act;
+    const findedActivity = activities.find(
+      (item) => item.activity_id === userCurrentActivity,
+    );
+
+    return isFriend &&
+      user.c_user_profile !== null &&
+      user.c_user_profile.profile_img_ava !== null ? (
+      <Image
+        style={s.mapPopUpImg}
+        source={{
+          uri: `${profileImagePath}/${user.c_user_profile.profile_img_ava}`,
+        }}
+      />
+    ) : (
+      <Image
+        style={s.mapPopUpImg}
+        source={{
+          uri: `${activitiesImagePath}/${findedActivity.activity_img}`,
+        }}
+      />
+    );
+  };
+
   const hidePopUp = () => {
     setPopUpVisible(false);
     setPopUpProps({});
   };
 
   useEffect(() => {
+    getUserId();
+    getActivities();
     getUserLocationPermision();
   }, []);
 
@@ -168,16 +196,17 @@ const Main = () => {
             style={s.mapPopUpBtn}
             activeOpacity={0.8}
             onPress={() => setActiveUser(user.c_user_id)}>
+            {(() => checkFriendship(user))()}
             <Image
-              style={s.mapPopUpImg}
-              source={
-                user.c_user_profile !== null &&
-                user.c_user_profile.profile_img_ava !== null
-                  ? {
-                      uri: `${profileImageUrl}/${user.c_user_profile.profile_img_ava}`,
-                    }
-                  : AvatarPlaceholderImg
-              }
+            // style={s.mapPopUpImg}
+            // source={checkFriendship(user)}
+
+            //  ?
+            // :
+            // {
+            //     uri: `${profileImageUrl}/${user.c_user_profile.profile_img_ava}`,
+            //   }
+            // AvatarPlaceholderImg
             />
           </TouchableOpacity>
           {activeUser === user.c_user_id ? (

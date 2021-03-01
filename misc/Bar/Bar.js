@@ -19,10 +19,16 @@ import Button from '../Button/Button';
 import BarStatus from '../BarStatus/BarStatus';
 import Rater from '../Rater/Rater';
 import Timer from '../Timer/Timer';
+import Alert from '../Alert/Alert';
 import {axiosPost} from '../../hooks/useAxios';
 import {getAccessToken} from '../../hooks/useAccessToken';
 import SuccessImg from '../../assets/icons/ic-agreeOn.png';
 import {getItem, setItem} from '../../hooks/useAsyncStorage';
+import {getHeadersWithToken} from '../../hooks/useApiData';
+import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
+import {updateFavoritesPath, updateRatePath} from '../../api/routes';
+import {errorsContent} from '../../data';
+import {generateRandomId} from '../../hooks/useIdGenerator';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -37,21 +43,31 @@ const Bar = ({
   records,
   testAction,
 }) => {
-  const ratePath = 'locations/loc_rate';
+  const generatedId = generateRandomId();
   const innerHeight = Dimensions.get('window').height;
-  const defaultTopVal = innerHeight * 0.66;
   const pan = useRef(new Animated.ValueXY({x: 0, y: 0}));
-  const layout = pan.current.getLayout();
+  // const defaultTopVal = innerHeight * 0.66;
+  // const layout = pan.current.getLayout();
 
-  const [timerProps, setTimerProps] = useState({speed: 0});
+  const [error, setError] = useState({
+    isVisible: false,
+    title: '',
+    text: '',
+  });
   const [barStatusProps, setBarStatusProps] = useState({
     title,
     image: activity.activity_img,
     imageType: 'link',
   });
+  const [timerProps, setTimerProps] = useState({speed: 0});
   const [barShowed, setBarShowed] = useState(true);
-  const [defaultPan, setDefaultPan] = useState(layout.top._value);
-  const [defaultOffset, setDefaultOffset] = useState(pan.current.x._offset);
+  const [isRouteStarted, setIsRouteStarted] = useState(false);
+  const [isPublishingMode, setIsPublishingMode] = useState(false);
+  const [userLocation, setUserLocation] = useState([]);
+  const [usersRouteCoordinates, setUsersRouteCoordinates] = useState([]);
+
+  // const [defaultPan, setDefaultPan] = useState(layout.top._value);
+  // const [defaultOffset, setDefaultOffset] = useState(pan.current.x._offset);
 
   const renderRater = (
     <Rater
@@ -66,8 +82,82 @@ const Bar = ({
 
   const [activeElement, setActiveElement] = useState(renderBarStatus);
 
+  const checkCanStartRoute = () => {
+    const parsedCoordinates = JSON.parse(coordinates);
+    const startPoint = parsedCoordinates[0];
+    const distanceToStart = calculateByCoordinates(startPoint, userLocation);
+    const canStartRoute = distanceToStart < 0.2 * 1.36;
+
+    if (canStartRoute) {
+      startRoute();
+    } else {
+      setError({
+        isVisible: true,
+        title: errorsContent.routeStartingDistanceError.title,
+        text: errorsContent.routeStartingDistanceError.text,
+      });
+    }
+  };
+
+  const startRoute = () => {
+    if (userLocation.length !== 0) {
+      setIsRouteStarted(true);
+      setActiveElement(renderTimer);
+    } else {
+      setError({
+        isVisible: true,
+        title: errorsContent.geolocationError.title,
+        text: errorsContent.geolocationError.text,
+      });
+    }
+  };
+
+  const checkCanFinishRoute = () => {
+    const parsedCoordinates = JSON.parse(coordinates);
+    const coordinatesLength = parsedCoordinates.length;
+    const finishPoint = parsedCoordinates[coordinatesLength - 1];
+    const distanceToFinish = calculateByCoordinates(finishPoint, userLocation);
+    const canFinishRoute = distanceToFinish < 0.2 * 1.36;
+
+    if (canFinishRoute) {
+      finishRoute();
+    } else {
+      setError({
+        isVisible: true,
+        title: errorsContent.routeFinishingDistanceError.title,
+        text: errorsContent.routeFinishingDistanceError.text,
+      });
+    }
+  };
+
+  const finishRoute = () => {
+    setIsRouteStarted(false);
+    setIsPublishingMode(true);
+  };
+
+  const handleUserCoordinates = (e) => {
+    const longitude = e.coords.longitude;
+    const latitude = e.coords.latitude;
+    setUserLocation([longitude, latitude]);
+    if (isRouteStarted) {
+      setUsersRouteCoordinates((prev) => [...prev, [longitude, latitude]]);
+    }
+  };
+
   const returnShape = () => {
     const parsedCoordinates = JSON.parse(coordinates);
+    const point = turf.geometry('MultiPoint', []);
+    const line = turf.geometry('LineString', parsedCoordinates);
+    const collection = turf.geometryCollection([point, line]);
+    return collection;
+  };
+
+  const returnUsersShape = () => {
+    const initialCordinates = [userLocation, userLocation];
+    const parsedCoordinates =
+      usersRouteCoordinates.length <= 1
+        ? initialCordinates
+        : usersRouteCoordinates;
     const point = turf.geometry('MultiPoint', []);
     const line = turf.geometry('LineString', parsedCoordinates);
     const collection = turf.geometryCollection([point, line]);
@@ -81,40 +171,31 @@ const Bar = ({
   };
 
   const rateLocationRequest = async (rate) => {
-    const token = await getAccessToken();
-    const headers = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    };
+    const headers = await getHeadersWithToken('urlencoded');
 
     let postData = new URLSearchParams();
     postData.append('loc_id', id);
     postData.append('loc_rating', +rate);
 
-    const request = await axiosPost(ratePath, postData, headers);
-    console.log('request', request);
+    await axiosPost(updateRatePath, postData, headers);
   };
 
   let initialFavoriteLocations = [];
   const saveLocation = async () => {
-    const token = await getAccessToken();
-    let postData = new URLSearchParams();
-    const headers = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    };
-    const updateFavoritesPath = 'profiles/favourite_add';
+    setBarStatusProps({
+      title: 'Location saved',
+      image: SuccessImg,
+      imageType: 'image',
+    });
+
+    const headers = await getHeadersWithToken('urlencoded');
     const profileData = await getItem('profile');
+    let postData = new URLSearchParams();
     let parsedProfileData = JSON.parse(profileData);
     let favoriteLocaitons = parsedProfileData.profile_favourite_locs;
 
     if (favoriteLocaitons !== null) {
       const isExist = checkItemExistsInArray(favoriteLocaitons, id);
-      console.log('isExist', isExist);
       if (isExist) {
         removeItemFromArray(favoriteLocaitons, id);
       } else {
@@ -122,26 +203,24 @@ const Bar = ({
       }
       parsedProfileData.profile_favourite_locs = favoriteLocaitons;
 
-      postData.append('favourite_locs', favoriteLocaitons);
+      const stringedFavoriteLocations = JSON.stringify(favoriteLocaitons);
+      postData.append('favourite_locs', stringedFavoriteLocations);
 
-      const res = await axiosPost(updateFavoritesPath, postData, headers);
+      await axiosPost(updateFavoritesPath, postData, headers);
     } else {
       addItemToArray(initialFavoriteLocations, id);
       parsedProfileData.profile_favourite_locs = initialFavoriteLocations;
 
-      postData.append('favourite_locs', initialFavoriteLocations);
+      const stringedInitialFavoriteLocations = JSON.stringify(
+        initialFavoriteLocations,
+      );
+      postData.append('favourite_locs', stringedInitialFavoriteLocations);
 
-      const res = await axiosPost(updateFavoritesPath, postData, headers);
+      await axiosPost(updateFavoritesPath, postData, headers);
     }
 
     const stringedProfileData = JSON.stringify(parsedProfileData);
     await setItem('profile', stringedProfileData);
-
-    setBarStatusProps({
-      title: 'Location saved',
-      image: SuccessImg,
-      imageType: 'image',
-    });
   };
 
   const addItemToArray = (arr, item) => {
@@ -158,14 +237,28 @@ const Bar = ({
   };
 
   const checkItemExistsInArray = (arr, item) => {
-    console.log('arr', arr);
     const res = arr.includes(item);
     return res;
+  };
+
+  const hideAlert = () => {
+    setTimeout(() => {
+      setError({isVisible: false, title: '', text: ''});
+    }, 500);
   };
 
   useEffect(() => {
     setActiveElement(renderBarStatus);
   }, [barStatusProps]);
+
+  const renderAlert = error.isVisible ? (
+    <Alert
+      title={error.title}
+      text={error.text}
+      type="error"
+      closeAction={hideAlert}
+    />
+  ) : null;
 
   const renderResponder = (
     <TouchableOpacity
@@ -203,14 +296,27 @@ const Bar = ({
             action={() => saveLocation()}
           />
         </View>
-        <View style={s.item}>
-          <Button
-            text={'Start'}
-            style={'orange'}
-            customStyle={{height: 39}}
-            imageStyle={{borderRadius: 30}}
-          />
-        </View>
+        {isRouteStarted ? (
+          <View style={s.item}>
+            <Button
+              text={'Finish'}
+              style={'orange'}
+              customStyle={{height: 39}}
+              imageStyle={{borderRadius: 30}}
+              action={() => checkCanFinishRoute()}
+            />
+          </View>
+        ) : (
+          <View style={s.item}>
+            <Button
+              text={'Start'}
+              style={'orange'}
+              customStyle={{height: 39}}
+              imageStyle={{borderRadius: 30}}
+              action={() => checkCanStartRoute()}
+            />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -223,6 +329,10 @@ const Bar = ({
           style={'red'}
           customStyle={{height: 39}}
           imageStyle={{borderRadius: 20}}
+          action={() => {
+            setIsPublishingMode(false);
+            setActiveElement(renderBarStatus);
+          }}
         />
       </View>
       <View style={s.rightMapButton}>
@@ -231,6 +341,10 @@ const Bar = ({
           style={'green'}
           customStyle={{height: 39}}
           imageStyle={{borderRadius: 20}}
+          action={() => {
+            setIsPublishingMode(false);
+            setActiveElement(renderBarStatus);
+          }}
         />
       </View>
     </Fragment>
@@ -248,9 +362,10 @@ const Bar = ({
           centerCoordinate={returnStartCoordinates()}
         />
         <MapboxGL.UserLocation
-          onUpdate={(e) =>
-            setTimerProps({...timerProps, speed: e.coords.speed / 1.36})
-          }
+          onUpdate={(e) => {
+            setTimerProps({...timerProps, speed: e.coords.speed / 1.36});
+            handleUserCoordinates(e);
+          }}
         />
         {coordinates ? (
           <MapboxGL.ShapeSource id={id} shape={returnShape()}>
@@ -270,13 +385,30 @@ const Bar = ({
             />
           </MapboxGL.ShapeSource>
         ) : null}
+        {isRouteStarted ? (
+          <MapboxGL.ShapeSource id="id" shape={returnUsersShape()}>
+            <MapboxGL.LineLayer
+              id="userLine"
+              style={{
+                lineColor: 'red',
+                lineWidth: 3,
+              }}
+            />
+            <MapboxGL.CircleLayer
+              id="userCircle"
+              style={{
+                circleRadius: 2,
+                circleColor: 'red',
+              }}
+            />
+          </MapboxGL.ShapeSource>
+        ) : null}
       </MapboxGL.MapView>
-      {/* {renderMapButtons} */}
+      {isPublishingMode ? renderMapButtons : null}
     </View>
   );
 
   return (
-    // <Animated.View style={[s.container, {top: pan.current.getLayout().top}]}>
     <Animated.View
       style={[
         s.container,
@@ -284,12 +416,10 @@ const Bar = ({
       ]}>
       <View style={s.inner}>
         {renderResponder}
+        {renderAlert}
         <ScrollView style={s.scrollBox} scrollEnabled={barShowed}>
           {activeElement}
           {renderButtonsRow}
-          {/* <View style={s.wrapper}>
-            <Text style={s.text}>Your time: 24 min, speed 52 mi/h</Text>
-          </View> */}
           {renderMap}
           <Leaderboard />
         </ScrollView>
@@ -299,6 +429,14 @@ const Bar = ({
 };
 
 export default Bar;
+
+// <Animated.View style={[s.container, {top: pan.current.getLayout().top}]}>
+
+{
+  /* <View style={s.wrapper}>
+            <Text style={s.text}>Your time: 24 min, speed 52 mi/h</Text>
+          </View> */
+}
 
 {
   /* <Text style={{color: '#fff', fontSize: 20}}>Pan: {defaultPan}</Text>

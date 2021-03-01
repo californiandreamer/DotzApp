@@ -7,6 +7,8 @@ import {
   Text,
   View,
   Keyboard,
+  FlatList,
+  RefreshControl,
 } from 'react-native';
 import {TextInput, TouchableOpacity} from 'react-native-gesture-handler';
 import Header from '../../misc/Header/Header';
@@ -15,15 +17,15 @@ import {getAccessToken} from '../../hooks/useAccessToken';
 import {getItem} from '../../hooks/useAsyncStorage';
 import {axiosGet} from '../../hooks/useAxios';
 import {socketUrl} from '../../api/api';
+import {getHeadersWithToken} from '../../hooks/useApiData';
 
 const Dialog = ({route}) => {
   const [userId, setUserId] = useState([]);
+  const [socket, setSocket] = useState(null);
   const [messageValue, setMessageValue] = useState('');
   const [messagesList, setMessagesList] = useState([]);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
-  console.log('messagesList', messagesList);
 
-  let initialMessagesList = [];
   const chatHistoryPath = 'chat/getChatHistory';
   const scrollRef = useRef(null);
   const rotateValue = useRef(new Animated.Value(0)).current;
@@ -43,20 +45,16 @@ const Dialog = ({route}) => {
   const interlocutorId = route.params.id;
   const interlocutorName = route.params.name;
 
+  let initialMessagesList = [];
   const getChatHistory = async () => {
     const token = await getAccessToken();
+    const headers = await getHeadersWithToken();
     const profile = await getItem('profile');
     const parsedProfile = JSON.parse(profile);
     const profileUserId = parsedProfile.app_user_id;
     setUserId(profileUserId);
 
-    const headersUserToken = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-
-    const chatHistory = await axiosGet(chatHistoryPath, headersUserToken);
+    const chatHistory = await axiosGet(chatHistoryPath, headers);
 
     for (let i = 0; i < chatHistory.length; i++) {
       const chatItem = chatHistory[i];
@@ -74,33 +72,30 @@ const Dialog = ({route}) => {
 
   const connectToSocket = async (token) => {
     const conn = new WebSocket(`${socketUrl}${token}`);
-    let mounted = true;
+    setSocket(conn);
 
     conn.onmessage = (e) => {
       const data = e.data;
       const parsedData = JSON.parse(data);
       if (parsedData.hasOwnProperty('message')) {
-        setMessagesList((prev) => [...prev, {...parsedData}]);
+        initialMessagesList.push(parsedData);
+        setMessagesList(initialMessagesList);
       }
     };
   };
 
   const sendMessage = async () => {
-    const token = await getAccessToken();
-    const conn = new WebSocket(`${socketUrl}${token}`);
     const timeStamp = +new Date();
     const stringedTimeStamp = JSON.stringify(timeStamp);
     const date = new Date().toISOString();
 
-    conn.onopen = (e) => {
-      const obj = {
-        msg: messageValue,
-        msg_reciever_id: interlocutorId,
-        msg_timestamp_sent: stringedTimeStamp,
-        msg_time_sent: date,
-      };
-      conn.send(JSON.stringify(obj));
+    const obj = {
+      msg: messageValue,
+      msg_reciever_id: interlocutorId,
+      msg_timestamp_sent: stringedTimeStamp,
+      msg_time_sent: date,
     };
+    socket.send(JSON.stringify(obj));
 
     setMessagesList([
       ...messagesList,
@@ -124,8 +119,7 @@ const Dialog = ({route}) => {
     const idValue = lastItem.msg_id;
     const parsedIdValue = parseInt(idValue);
     const newId = parsedIdValue + 1;
-    const stringedNewId = newId.toString();
-    return stringedNewId;
+    return newId;
   };
 
   const handleScroll = () => {
@@ -205,7 +199,7 @@ const Dialog = ({route}) => {
                   s.item,
                   message.author_id === userId ? s.user : s.interlocutor,
                 ]}
-                key={message.msg_id}>
+                key={message.msg_id || message.msg_timestamp_sent}>
                 <View style={s.inner}>
                   <Text style={s.text}>{message.message}</Text>
                 </View>

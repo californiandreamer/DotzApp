@@ -1,9 +1,9 @@
 import React, {Fragment, useEffect, useState} from 'react';
 import {StyleSheet, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import axios from 'axios';
+import {axiosGet} from '../../hooks/useAxios';
 import {errorsContent} from '../../data';
-import {url, headersUserToken} from '../../api/api';
+import {activitiesPath} from '../../api/routes';
 import Button from '../../misc/Button/Button';
 import Selector from '../../misc/Selector/Selector';
 import RegistrationForm from '../../misc/RegistrationForm/RegistrationForm';
@@ -78,11 +78,9 @@ const Registration = ({route}) => {
   };
 
   const getActivities = async () => {
-    const request = await axios
-      .get(`${url}/activities?activities=[]`, headersUserToken)
+    const request = await axiosGet(activitiesPath)
       .then((res) => {
-        console.log(res);
-        setActivitiesData(res.data);
+        setActivitiesData(res);
       })
       .catch((error) => console.log('error', error));
   };

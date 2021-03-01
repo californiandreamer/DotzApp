@@ -9,13 +9,15 @@ import {socketUrl} from '../../api/api';
 import {axiosGet, axiosPost} from '../../hooks/useAxios';
 import {getItem} from '../../hooks/useAsyncStorage';
 import {useNavigation} from '@react-navigation/native';
+import {getHeadersWithToken} from '../../hooks/useApiData';
+import {addToFriendsPath, chatHistoryPath} from '../../api/routes';
 
 const Friends = () => {
-  const chatHistoryPath = 'chat/getChatHistory';
-
   const [listType, setListType] = useState('Friends');
   const [friendsList, setFriendsList] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [friendsRequestsList, setFriendsRequestsList] = useState([]);
+  console.log('friendsRequestsList', friendsRequestsList);
   const [socket, setSocket] = useState(null);
 
   const navigation = useNavigation();
@@ -28,28 +30,38 @@ const Friends = () => {
   };
 
   const getFriendsList = async () => {
+    let initialFriendsList = [];
+    setRefreshing(true);
     setFriendsList([]);
     const profile = await getItem('profile');
     const parsedProfile = JSON.parse(profile);
     const friends = parsedProfile.friends;
-    setFriendsList(friends);
+
+    for (let i = 0; i < friends.length; i++) {
+      const friendsItem = friends[i];
+      const friendId = friendsItem.app_user_id;
+      const isExist = initialFriendsList.some(
+        (item) => item.app_user_id === friendId,
+      );
+      if (!isExist) {
+        initialFriendsList.push(friendsItem);
+      }
+    }
+    setFriendsList(initialFriendsList);
+    setRefreshing(false);
   };
 
-  let initialFriendsRequestsList = [];
   const getFriendsRequestsList = async () => {
+    let initialFriendsRequestsList = [];
+    setRefreshing(true);
     setFriendsRequestsList([]);
-    const token = await getAccessToken();
     const profile = await getItem('profile');
     const parsedProfile = JSON.parse(profile);
     const profileFriendsList = parsedProfile.friends;
 
-    const headersUserToken = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
+    const headers = await getHeadersWithToken();
 
-    const chatHistory = await axiosGet(chatHistoryPath, headersUserToken);
+    const chatHistory = await axiosGet(chatHistoryPath, headers);
     const reversedChatHistory = chatHistory.reverse();
 
     for (let i = 0; i < reversedChatHistory.length; i++) {
@@ -69,6 +81,7 @@ const Friends = () => {
     }
 
     setFriendsRequestsList(initialFriendsRequestsList);
+    setRefreshing(false);
   };
 
   const connectToSocket = async () => {
@@ -78,23 +91,14 @@ const Friends = () => {
   };
 
   const approveFrendship = async (id) => {
-    const token = await getAccessToken();
-    const headers = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    };
+    const headers = await getHeadersWithToken('urlencoded');
 
     let postData = new URLSearchParams();
     postData.append('app_user_id', id);
     postData.append('profile_rel_status', 'friends');
 
-    const req = await axiosPost('profile/frineds/add', postData, headers);
+    const req = await axiosPost(addToFriendsPath, postData, headers);
     console.log('req', req);
-
-    getFriendsList();
-    getFriendsRequestsList();
   };
 
   useEffect(() => {
@@ -122,9 +126,14 @@ const Friends = () => {
             listType === 'Friend requests' ? friendsRequestsList : friendsList
           }
           type={listType}
+          refreshing={refreshing}
           approveFrendshipAction={(id) => approveFrendship(id)}
           showProfileAction={(route, params) => stackPush(route, params)}
           showChatAction={(route, params) => stackPush(route, params)}
+          onRefresh={() => {
+            getFriendsList();
+            getFriendsRequestsList();
+          }}
         />
       </View>
     </ImageBackground>

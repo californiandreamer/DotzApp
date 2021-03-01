@@ -1,6 +1,13 @@
 import React, {useState} from 'react';
 import s from './FriendsList.s';
-import {View, Text, ScrollView, Image, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
 import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 import cancelImg from '../../assets/icons/ic-close2.png';
 import {profileImageUrl} from '../../api/api';
@@ -8,16 +15,21 @@ import {profileImageUrl} from '../../api/api';
 const FriendsList = ({
   list,
   type,
+  refreshing,
   showProfileAction,
   showChatAction,
   approveFrendshipAction,
+  onRefresh,
 }) => {
-  const [isConfrimDisabled, setIsConfrimDisabled] = useState(false);
-
   return (
-    <ScrollView style={s.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={s.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }>
       {list.map((item) => (
-        <View style={s.item} key={item.app_user_id}>
+        <View style={s.item} key={item.app_user_id || item.author_id}>
           <View style={s.topRow}>
             <Image
               style={s.image}
@@ -46,22 +58,18 @@ const FriendsList = ({
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={[
-                  s.confirmButton,
-                  {opacity: isConfrimDisabled ? 0.7 : 1},
-                ]}
-                disabled={isConfrimDisabled}
+                style={s.confirmButton}
                 activeOpacity={0.8}
                 onPress={() => {
                   approveFrendshipAction(item.app_user_id || item.author_id);
-                  setIsConfrimDisabled(true);
                 }}>
                 <Text style={s.buttonText}>Confirm</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={s.profileButton}
+              style={[s.profileButton, {opacity: type === 'Friends' ? 1 : 0.7}]}
               activeOpacity={0.8}
+              disabled={type === 'Friends' ? false : true}
               onPress={() =>
                 showProfileAction('Profile', {
                   id: item.app_user_id,

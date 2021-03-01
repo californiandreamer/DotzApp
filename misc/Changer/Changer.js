@@ -1,10 +1,11 @@
 import React, {useState} from 'react';
 import s from './Changer.s';
 import {View, Text, Image, TouchableOpacity} from 'react-native';
+import {activitiesImagePath} from '../../api/routes';
 
 const Changer = ({disabled, activities, currentActivity, action}) => {
-  const path = 'http://admin.officialdotzapp.com/uploads/activities';
-
+  console.log('activitiesCHANGER', activities);
+  console.log('currentActivityCHANGER', currentActivity);
   return (
     <View style={s.container}>
       {activities.map((activity) => (
@@ -21,7 +22,7 @@ const Changer = ({disabled, activities, currentActivity, action}) => {
             <Image
               style={s.image}
               source={{
-                uri: `${path}/${activity.activity_img}`,
+                uri: `${activitiesImagePath}/${activity.activity_img}`,
               }}
             />
             <Text style={s.text}>{activity.activity_name}</Text>

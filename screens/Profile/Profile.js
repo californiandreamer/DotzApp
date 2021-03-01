@@ -24,13 +24,12 @@ import {mapBoxToken, profileImageUrl, socketUrl} from '../../api/api';
 import {getItem, setItem} from '../../hooks/useAsyncStorage';
 import {axiosGet, axiosPost} from '../../hooks/useAxios';
 import {getAccessToken} from '../../hooks/useAccessToken';
+import {activitiesPath, chatHistoryPath} from '../../api/routes';
+import {getHeadersWithToken} from '../../hooks/useApiData';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
 const Profile = ({route}) => {
-  const path = 'profiles/current_activity';
-  const chatHistoryPath = 'chat/getChatHistory';
-
   const navigation = useNavigation();
   const tabProps = {
     tab1: 'Main info',
@@ -40,11 +39,10 @@ const Profile = ({route}) => {
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  console.log('isButtonDisabled', isButtonDisabled);
   const [activeTab, setActiveTab] = useState(tabProps.tab1);
   const [activitiesData, setActivitiesData] = useState([]);
   const [profileData, setProfileData] = useState({});
-  const [currentActivity, setCurrentActivity] = useState('1');
+  const [currentActivity, setCurrentActivity] = useState(null);
   const [socket, setSocket] = useState(null);
   console.log('currentActivity', currentActivity);
 
@@ -62,6 +60,7 @@ const Profile = ({route}) => {
       setProfileData({...route.params});
       getActivities(route.params.activities);
       checkIsFriend(route.params.id);
+      setCurrentActivity(route.params.currentActivity);
     } else {
       getProfileData();
       setIsOwnProfile(true);
@@ -90,41 +89,29 @@ const Profile = ({route}) => {
     const parsedData = JSON.parse(data);
     const profileFriendsList = parsedData.friends;
     const isFriend = profileFriendsList.some((item) => item.app_user_id === id);
-    console.log('isFriend', isFriend);
     setIsButtonVisible(!isFriend);
     checkFriendRequestSended(id);
   };
 
   const checkFriendRequestSended = async (id) => {
-    const token = await getAccessToken();
-    const headersUserToken = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-
-    const chatHistory = await axiosGet(chatHistoryPath, headersUserToken);
+    const headers = await getHeadersWithToken();
+    const chatHistory = await axiosGet(chatHistoryPath, headers);
     const isRequestExist = chatHistory.some((item) => item.author_id === id);
-    console.log('chatHistory', chatHistory);
-    console.log('isRequestExist', isRequestExist);
     setIsButtonDisabled(isRequestExist);
   };
 
   const getActivities = async (current) => {
-    const activitiesPath = 'activities?activities=[]';
     const request = await axiosGet(activitiesPath);
     getCurrentActivities(current, request);
   };
 
-  let currentActivitiesArr = [];
   const getCurrentActivities = (current, data) => {
+    let currentActivitiesArr = [];
     const activities = current;
-    console.log('activities', activities);
 
     for (let i = 0; i < data.length; i++) {
       const id = data[i].activity_id;
       const value = activities.includes(id);
-      console.log('value');
       if (value) {
         currentActivitiesArr.push(data[i]);
       }
@@ -153,25 +140,6 @@ const Profile = ({route}) => {
     socket.send(JSON.stringify(obj));
   };
 
-  // const currentActivityRequest = async () => {
-  //   const token = await getAccessToken();
-  //   const headers = {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //       'Content-Type': 'application/x-www-form-urlencoded',
-  //     },
-  //   };
-
-  //   let postData = new URLSearchParams();
-  //   postData.append('profile_current_act', currentActivity);
-
-  //   await setItem('current_activity', currentActivity);
-
-  //   const request = await axiosPost(path, postData, headers);
-
-  //   stackNavigate('Root');
-  // };
-
   useEffect(() => {
     connectToSocket();
     checkOwnProfile();
@@ -186,19 +154,6 @@ const Profile = ({route}) => {
         currentActivity={currentActivity}
         action={(activity) => setCurrentActivity(activity)}
       />
-      {/* <Text style={s.title}>All activities</Text>
-      <Changer
-        activities={activitiesData}
-        action={(activity) => setCurrentActivity(activity)}
-      /> */}
-      {/* <View style={s.rowStartWrapper}>
-        <Text style={s.text}>Miles since registration: 14</Text>
-        <Image style={s.image} source={DistanceImg} />
-      </View>
-      <View style={s.rowStartWrapper}>
-        <Text style={s.text}>Largest rideout: 21</Text>
-        <Image style={s.image} source={PersonImg} />
-      </View> */}
     </View>
   );
 
@@ -405,3 +360,21 @@ const s = StyleSheet.create({
     color: '#fff',
   },
 });
+
+{
+  /* <Text style={s.title}>All activities</Text>
+      <Changer
+        activities={activitiesData}
+        action={(activity) => setCurrentActivity(activity)}
+      /> */
+}
+{
+  /* <View style={s.rowStartWrapper}>
+        <Text style={s.text}>Miles since registration: 14</Text>
+        <Image style={s.image} source={DistanceImg} />
+      </View>
+      <View style={s.rowStartWrapper}>
+        <Text style={s.text}>Largest rideout: 21</Text>
+        <Image style={s.image} source={PersonImg} />
+      </View> */
+}

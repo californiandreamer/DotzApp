@@ -1,7 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {GoogleSignin, statusCodes} from '@react-native-community/google-signin';
-import axios from 'axios';
 import {
   Image,
   ImageBackground,
@@ -10,14 +8,15 @@ import {
   Text,
   View,
 } from 'react-native';
-import {clientId, clientSecret, headersUrlencoded, url} from '../../api/api';
-import {getAccessToken} from '../../hooks/useAccessToken';
+import {clientId, clientSecret, headersUrlencoded} from '../../api/api';
 import BackgroundImage from '../../assets/images/gradient.jpg';
 import Logo from '../../assets/images/logo.png';
-import {getItem, setItem} from '../../hooks/useAsyncStorage';
+import {setItem} from '../../hooks/useAsyncStorage';
 import Alert from '../../misc/Alert/Alert';
 import LoginForm from '../../misc/LoginForm/LoginForm';
 import {axiosPost} from '../../hooks/useAxios';
+import {errorsContent} from '../../data';
+import {loginPath} from '../../api/routes';
 
 const Login = () => {
   const [error, setError] = useState({
@@ -26,7 +25,6 @@ const Login = () => {
     text: '',
   });
 
-  const path = 'appuser/login';
   const navigation = useNavigation();
 
   const loginRequest = async (email, password) => {
@@ -37,32 +35,19 @@ const Login = () => {
     postData.append('client_id', clientId);
     postData.append('client_secret', clientSecret);
 
-    // const request = await axiosPost(path, postData, headersUrlencoded);
-    // if (request.app_user.email === email) {
-    //   console.log('true');
-    // } else {
-    //   setError({
-    //     isVisible: true,
-    //     title: 'Login error',
-    //     text: 'Something went wrong. Check your values and try again.',
-    //   });
-    // }
-
-    const request = await axios
-      .post(`${url}/${path}`, postData, headersUrlencoded)
+    const request = axiosPost(loginPath, postData, headersUrlencoded)
       .then((res) => {
-        const data = res.data;
-        const token = data.access_token;
-        const userInfo = data.app_user;
-        const userProfile = data.profile;
+        const token = res.access_token;
+        const userInfo = res.app_user;
+        const userProfile = res.profile;
         const profile = {...userProfile, ...userInfo};
         saveProfileData(token, profile);
       })
       .catch((error) => {
         setError({
           isVisible: true,
-          title: 'Login error',
-          text: 'Something went wrong. Check your values and try again.',
+          title: errorsContent.wrongLoginData.title,
+          text: errorsContent.wrongLoginData.text,
         });
         console.log('error', error);
       });
@@ -114,7 +99,6 @@ const Login = () => {
         </View>
         <LoginForm
           action={(email, password) => loginRequest(email, password)}
-          action2={() => console.log('log')}
           onError={(title, text) => {
             setError({isVisible: true, title, text});
           }}

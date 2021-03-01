@@ -4,9 +4,9 @@ import {Image, Text, View} from 'react-native';
 import {TextInput, TouchableOpacity} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../Button/Button';
-import GoogleImg from '../../assets/icons/ic-google.png';
+import {errorsContent} from '../../data';
 
-const LoginForm = ({action, action2, onError}) => {
+const LoginForm = ({action, onError}) => {
   const [emailValue, setEmailValue] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
 
@@ -16,7 +16,10 @@ const LoginForm = ({action, action2, onError}) => {
     if (emailValue !== '' && passwordValue !== '') {
       action(emailValue, passwordValue);
     } else {
-      onError('Error', 'Check your emali and password and try again');
+      onError(
+        errorsContent.checkEmailAndPassword.title,
+        errorsContent.checkEmailAndPassword.text,
+      );
     }
   };
 
@@ -32,7 +35,7 @@ const LoginForm = ({action, action2, onError}) => {
           style={s.input}
           keyboardType="email-address"
           textContentType="emailAddress"
-          autoCompleteType="email"
+          // autoCompleteType="email"
           onChange={(e) => {
             e.persist();
             setEmailValue(e.nativeEvent.text);
@@ -64,16 +67,19 @@ const LoginForm = ({action, action2, onError}) => {
       <View style={s.wrapper}>
         <Button text={'Login'} style={'violet'} action={checkInputs} />
       </View>
-      <View style={s.wrapper}>
+    </View>
+  );
+};
+
+export default LoginForm;
+
+{
+  /* <View style={s.wrapper}>
         <TouchableOpacity
           style={s.googleBtn}
           activeOpacity={0.8}
           onPress={action2}>
           <Image style={s.googleImg} source={GoogleImg} />
         </TouchableOpacity>
-      </View>
-    </View>
-  );
-};
-
-export default LoginForm;
+      </View> */
+}

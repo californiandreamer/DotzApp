@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from 'react';
 import s from './Selector.s';
 import {View, Text, Image, TouchableOpacity} from 'react-native';
+import {activitiesImagePath} from '../../api/routes';
 import agreeOn from '../../assets/icons/ic-agreeOn.png';
 import agreeOff from '../../assets/icons/ic-agreeOff.png';
 
 const Selector = ({activities, onActivityChange}) => {
   const data = activities;
-  const path = 'http://admin.officialdotzapp.com/uploads/activities';
 
   const [activeItems, setActiveItems] = useState(['1']);
 
@@ -49,7 +49,7 @@ const Selector = ({activities, onActivityChange}) => {
           <Image
             style={s.itemImg}
             source={{
-              uri: `${path}/${item.activity_img}`,
+              uri: `${activitiesImagePath}/${item.activity_img}`,
             }}
           />
           <Text style={s.itemTitle}>{item.activity_name}</Text>

@@ -40,7 +40,7 @@ const Header = ({title, style, icon, quantity, action}) => {
         <TouchableOpacity style={s.button} activeOpacity={0.8} onPress={action}>
           {quantity ? (
             <View style={s.quantity}>
-              <Text style={s.quantityText}>1</Text>
+              <Text style={s.quantityText}>{quantity}</Text>
             </View>
           ) : null}
           <Image style={s.image} source={icon} />

@@ -9,6 +9,7 @@ import Alert from '../../misc/Alert/Alert';
 import {defaultLocation, privacyBubbleContent, errorsContent} from '../../data';
 import axios from 'axios';
 import {axiosPost} from '../../hooks/useAxios';
+import {registrationPath} from '../../api/routes';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -20,7 +21,6 @@ const PrivacyBubble = ({route}) => {
   const activities = route.params.activities;
   const image = route.params.image;
 
-  const path = 'appuser/register';
   const navigation = useNavigation();
 
   const [error, setError] = useState({
@@ -32,10 +32,9 @@ const PrivacyBubble = ({route}) => {
   const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
 
   const center = circleCoordinates;
-  const radius = 1;
+  const radius = 0.5;
   const options = {steps: 64, units: 'miles', properties: {foo: 'bar'}};
   const myCircle = turf.circle(center, radius, options);
-  console.log('myCircle', myCircle);
 
   const getUserLocationPermision = async () => {
     if (Platform.OS === 'android') {
@@ -59,18 +58,6 @@ const PrivacyBubble = ({route}) => {
   const registrationRequest = async () => {
     const stringedCoordinates = JSON.stringify(circleCoordinates);
 
-    console.log(
-      'log',
-      email,
-      password,
-      name,
-      city,
-      activities,
-      stringedCoordinates,
-      image.uri,
-      image.fileName,
-    );
-
     let postData = new FormData();
     postData.append('email', email);
     postData.append('password', password);
@@ -85,8 +72,11 @@ const PrivacyBubble = ({route}) => {
       type: image.type,
     });
 
-    const request = await axiosPost(path, postData, headersFormData);
-    console.log('request', request);
+    const request = await axiosPost(
+      registrationPath,
+      postData,
+      headersFormData,
+    );
 
     if (request.app_user_name === name) {
       stackNavigate('Login');
@@ -97,32 +87,6 @@ const PrivacyBubble = ({route}) => {
         text: errorsContent.registrationError.text,
       });
     }
-
-    // const request = await axios
-    //   .post(`${url}/${path}`, postData, headersFormData)
-    //   .then((res) => {
-    //     const data = res.data;
-    //     const status = res.status;
-    //     console.log('res', res);
-
-    //     if (status === 201) {
-    //       stackNavigate('ChooseActivity');
-    //     } else {
-    //       setError({
-    //         isVisible: true,
-    //         title: errorsContent.registrationError.title,
-    //         text: errorsContent.registrationError.text,
-    //       });
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     setError({
-    //       isVisible: true,
-    //       title: errorsContent.registrationError.title,
-    //       text: errorsContent.registrationError.text,
-    //     });
-    //     console.log('error', error);
-    //   });
   };
 
   const hideAlert = () => {
@@ -175,7 +139,7 @@ const PrivacyBubble = ({route}) => {
         onPress={(e) => handleMapPress(e)}>
         <MapboxGL.Camera zoomLevel={8} followUserLocation />
         <MapboxGL.UserLocation
-          minDisplacement={10000}
+          minDisplacement={100000}
           onUpdate={(e) => handleUserLocation(e)}
         />
         <MapboxGL.PointAnnotation id="Point" coordinate={circleCoordinates} />

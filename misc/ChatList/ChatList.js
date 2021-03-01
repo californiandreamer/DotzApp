@@ -1,24 +1,34 @@
 import React from 'react';
 import s from './ChatList.s';
-import {View, Text, ScrollView, Image, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
 import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 import {useNavigation} from '@react-navigation/native';
 
-const ChatList = ({list, action}) => {
+const ChatList = ({list, refreshing, onRefresh}) => {
   const navigation = useNavigation();
-  console.log('list', list);
 
   const stackNavigate = (route, params) => {
     navigation.navigate(route, params);
   };
 
   return (
-    <ScrollView style={s.list}>
+    <ScrollView
+      style={s.list}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }>
       {list.map((item) => (
         <TouchableOpacity
           style={s.item}
           activeOpacity={0.8}
-          key={item.msg_id}
+          key={item.msg_id || item.msg_timestamp_sent}
           onPress={() =>
             stackNavigate('Dialog', {
               id: item.author_id,

@@ -1,6 +1,11 @@
 // export const defaultLocation = [21.110343099999998, 52.2428017]; Warsaw
 export const defaultLocation = [-118.243683, 34.052235];
 
+export const privacyBubbleData = {
+  distance: 0.5,
+  dismentions: 'miles',
+};
+
 export const activities = [
   {
     id: 1,
@@ -55,9 +60,17 @@ export const activities = [
 ];
 
 export const errorsContent = {
+  wrongLoginData: {
+    title: 'Login error',
+    text: 'Something went wrong. Check your values and try again.',
+  },
   avoidPicture: {
     title: 'Picture error',
     text: 'Upload profile photo',
+  },
+  checkEmailAndPassword: {
+    title: 'Error',
+    text: 'Check your emali and password and try again',
   },
   invalidEmail: {
     title: 'Email error',
@@ -93,6 +106,19 @@ export const errorsContent = {
   },
   noLocations: {
     title: "You don't have any saved locations",
+  },
+  routeStartingDistanceError: {
+    title: "Can't start the route",
+    text: 'You have to be closer than 0.1 miles to start the route',
+  },
+  routeFinishingDistanceError: {
+    title: "Can't finish the route",
+    text: 'You have to be closer than 0.1 miles to finish the route',
+  },
+  geolocationError: {
+    title: 'Geolocation error',
+    text:
+      "Currently we can't read you coordinates. Please change your location and try again",
   },
 };
 
