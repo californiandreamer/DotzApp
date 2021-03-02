@@ -98,4 +98,17 @@ export default StyleSheet.create({
     bottom: 26,
     zIndex: 10,
   },
+  input: {
+    width: '100%',
+    height: 56,
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
+    borderColor: '#3A454B',
+    borderWidth: 2,
+    fontFamily: 'Gilroy-Regular',
+    fontSize: 18,
+    color: '#F0FCFF',
+  },
 });

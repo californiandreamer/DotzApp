@@ -84,6 +84,7 @@ const SignUpForm = ({action, onError}) => {
           keyboardType="email-address"
           textContentType="emailAddress"
           autoCompleteType="email"
+          autoCapitalize="none"
           onChange={(e) => {
             e.persist();
             setEmailValue(e.nativeEvent.text);
@@ -95,6 +96,7 @@ const SignUpForm = ({action, onError}) => {
         <TextInput
           style={s.input}
           textContentType="password"
+          autoCapitalize="none"
           secureTextEntry
           onChange={(e) => {
             e.persist();
@@ -107,6 +109,7 @@ const SignUpForm = ({action, onError}) => {
         <TextInput
           style={s.input}
           textContentType="password"
+          autoCapitalize="none"
           secureTextEntry
           onChange={(e) => {
             e.persist();

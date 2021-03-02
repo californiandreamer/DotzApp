@@ -7,7 +7,6 @@ import * as turf from '@turf/turf';
 import {headersFormData, mapBoxToken, url} from '../../api/api';
 import Alert from '../../misc/Alert/Alert';
 import {defaultLocation, privacyBubbleContent, errorsContent} from '../../data';
-import axios from 'axios';
 import {axiosPost} from '../../hooks/useAxios';
 import {registrationPath} from '../../api/routes';
 

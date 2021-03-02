@@ -9,26 +9,27 @@ import {
   PanResponder,
   Image,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import * as turf from '@turf/turf';
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import ResponderImg from '../../assets/icons/ic-responder.png';
 import Leaderboard from '../Leaderboard/Leaderboard';
-import {mapBoxToken} from '../../api/api';
+import {mapBoxToken, socketUrl} from '../../api/api';
 import Button from '../Button/Button';
 import BarStatus from '../BarStatus/BarStatus';
 import Rater from '../Rater/Rater';
 import Timer from '../Timer/Timer';
 import Alert from '../Alert/Alert';
 import {axiosPost} from '../../hooks/useAxios';
-import {getAccessToken} from '../../hooks/useAccessToken';
 import SuccessImg from '../../assets/icons/ic-agreeOn.png';
 import {getItem, setItem} from '../../hooks/useAsyncStorage';
 import {getHeadersWithToken} from '../../hooks/useApiData';
 import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
 import {updateFavoritesPath, updateRatePath} from '../../api/routes';
-import {errorsContent} from '../../data';
+import {errorsContent, postAddedContent, postDeleteContent} from '../../data';
 import {generateRandomId} from '../../hooks/useIdGenerator';
+import {getAccessToken} from '../../hooks/useAccessToken';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -49,22 +50,21 @@ const Bar = ({
   // const defaultTopVal = innerHeight * 0.66;
   // const layout = pan.current.getLayout();
 
-  const [error, setError] = useState({
-    isVisible: false,
-    title: '',
-    text: '',
-  });
   const [barStatusProps, setBarStatusProps] = useState({
     title,
     image: activity.activity_img,
     imageType: 'link',
   });
   const [timerProps, setTimerProps] = useState({speed: 0});
+  const [alertProps, setAlertProps] = useState({});
   const [barShowed, setBarShowed] = useState(true);
+  const [postInputValue, setPostInputValue] = useState('No description');
   const [isRouteStarted, setIsRouteStarted] = useState(false);
   const [isPublishingMode, setIsPublishingMode] = useState(false);
   const [userLocation, setUserLocation] = useState([]);
   const [usersRouteCoordinates, setUsersRouteCoordinates] = useState([]);
+  const [saveButtonText, setSaveButtonText] = useState('Save');
+  const [socket, setSocket] = useState(null);
 
   // const [defaultPan, setDefaultPan] = useState(layout.top._value);
   // const [defaultOffset, setDefaultOffset] = useState(pan.current.x._offset);
@@ -82,6 +82,12 @@ const Bar = ({
 
   const [activeElement, setActiveElement] = useState(renderBarStatus);
 
+  const connectToSocket = async () => {
+    const token = await getAccessToken();
+    const conn = new WebSocket(`${socketUrl}${token}`);
+    setSocket(conn);
+  };
+
   const checkCanStartRoute = () => {
     const parsedCoordinates = JSON.parse(coordinates);
     const startPoint = parsedCoordinates[0];
@@ -91,10 +97,12 @@ const Bar = ({
     if (canStartRoute) {
       startRoute();
     } else {
-      setError({
+      setAlertProps({
         isVisible: true,
         title: errorsContent.routeStartingDistanceError.title,
         text: errorsContent.routeStartingDistanceError.text,
+        type: 'error',
+        closeAction: hideAlert,
       });
     }
   };
@@ -104,10 +112,12 @@ const Bar = ({
       setIsRouteStarted(true);
       setActiveElement(renderTimer);
     } else {
-      setError({
+      setAlertProps({
         isVisible: true,
         title: errorsContent.geolocationError.title,
         text: errorsContent.geolocationError.text,
+        type: 'error',
+        closeAction: hideAlert,
       });
     }
   };
@@ -122,17 +132,57 @@ const Bar = ({
     if (canFinishRoute) {
       finishRoute();
     } else {
-      setError({
+      setAlertProps({
         isVisible: true,
         title: errorsContent.routeFinishingDistanceError.title,
         text: errorsContent.routeFinishingDistanceError.text,
+        type: 'error',
+        closeAction: hideAlert,
       });
     }
   };
 
   const finishRoute = () => {
-    setIsRouteStarted(false);
     setIsPublishingMode(true);
+  };
+
+  const addPostRequest = async () => {
+    const timeStamp = +new Date();
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const obj = {
+      pp_content: `${postInputValue}\n My last time on ${title}: 12:32s`,
+      msg_timestamp_sent: stringedTimeStamp,
+      post_action: 'addPost',
+      type: 'post',
+    };
+    socket.send(JSON.stringify(obj));
+    setAlertProps({
+      isVisible: true,
+      title: postAddedContent.title,
+      text: postAddedContent.text,
+      type: 'error',
+      closeAction: hideAlert,
+    });
+    clearPostData();
+  };
+
+  const deletePost = () => {
+    setAlertProps({
+      isVisible: true,
+      title: postDeleteContent.title,
+      text: postDeleteContent.text,
+      type: 'choice',
+      action1: hideAlert,
+      action2: clearPostData,
+    });
+  };
+
+  const clearPostData = () => {
+    setIsRouteStarted(false);
+    setIsPublishingMode(false);
+    setActiveElement(renderBarStatus);
+    setPostInputValue('No description');
+    hideAlert();
   };
 
   const handleUserCoordinates = (e) => {
@@ -180,34 +230,54 @@ const Bar = ({
     await axiosPost(updateRatePath, postData, headers);
   };
 
-  let initialFavoriteLocations = [];
-  const saveLocation = async () => {
-    setBarStatusProps({
-      title: 'Location saved',
-      image: SuccessImg,
-      imageType: 'image',
-    });
+  const checkIsLocationSaved = async () => {
+    const profileData = await getItem('profile');
+    let parsedProfileData = JSON.parse(profileData);
+    let favoriteLocaitons = parsedProfileData.profile_favourite_locs;
+    const isExist = checkItemExistsInArray(favoriteLocaitons, id);
 
+    if (isExist) {
+      setSaveButtonText('Unsave');
+    } else {
+      setSaveButtonText('Save');
+    }
+  };
+
+  const saveLocation = async () => {
     const headers = await getHeadersWithToken('urlencoded');
     const profileData = await getItem('profile');
     let postData = new URLSearchParams();
     let parsedProfileData = JSON.parse(profileData);
     let favoriteLocaitons = parsedProfileData.profile_favourite_locs;
+    const parsedFavoriteLocations = JSON.parse(favoriteLocaitons);
 
     if (favoriteLocaitons !== null) {
-      const isExist = checkItemExistsInArray(favoriteLocaitons, id);
+      const isExist = checkItemExistsInArray(parsedFavoriteLocations, id);
       if (isExist) {
-        removeItemFromArray(favoriteLocaitons, id);
+        removeItemFromArray(parsedFavoriteLocations, id);
+        setBarStatusProps({
+          title: 'Location was removed from saved',
+          image: SuccessImg,
+          imageType: 'image',
+        });
       } else {
-        addItemToArray(favoriteLocaitons, id);
+        addItemToArray(parsedFavoriteLocations, id);
+        setBarStatusProps({
+          title: 'Location saved',
+          image: SuccessImg,
+          imageType: 'image',
+        });
       }
-      parsedProfileData.profile_favourite_locs = favoriteLocaitons;
 
-      const stringedFavoriteLocations = JSON.stringify(favoriteLocaitons);
+      const stringedFavoriteLocations = JSON.stringify(parsedFavoriteLocations);
+
+      parsedProfileData.profile_favourite_locs = stringedFavoriteLocations;
+
       postData.append('favourite_locs', stringedFavoriteLocations);
 
       await axiosPost(updateFavoritesPath, postData, headers);
     } else {
+      let initialFavoriteLocations = [];
       addItemToArray(initialFavoriteLocations, id);
       parsedProfileData.profile_favourite_locs = initialFavoriteLocations;
 
@@ -243,20 +313,30 @@ const Bar = ({
 
   const hideAlert = () => {
     setTimeout(() => {
-      setError({isVisible: false, title: '', text: ''});
+      setAlertProps({isVisible: false, title: '', text: ''});
     }, 500);
   };
+
+  useEffect(() => {
+    connectToSocket();
+    checkIsLocationSaved();
+  }, []);
 
   useEffect(() => {
     setActiveElement(renderBarStatus);
   }, [barStatusProps]);
 
-  const renderAlert = error.isVisible ? (
-    <Alert
-      title={error.title}
-      text={error.text}
-      type="error"
-      closeAction={hideAlert}
+  const renderAlert = alertProps.isVisible ? <Alert {...alertProps} /> : null;
+
+  const renderPostInput = isPublishingMode ? (
+    <TextInput
+      style={s.input}
+      placeholder="Post description or link"
+      placeholderTextColor={'#777'}
+      onChange={(e) => {
+        e.persist;
+        setPostInputValue(e.nativeEvent.text);
+      }}
     />
   ) : null;
 
@@ -289,7 +369,7 @@ const Bar = ({
         </View>
         <View style={s.item}>
           <Button
-            text={'Save'}
+            text={saveButtonText}
             style={'orange'}
             customStyle={{height: 39}}
             imageStyle={{borderRadius: 30}}
@@ -329,10 +409,7 @@ const Bar = ({
           style={'red'}
           customStyle={{height: 39}}
           imageStyle={{borderRadius: 20}}
-          action={() => {
-            setIsPublishingMode(false);
-            setActiveElement(renderBarStatus);
-          }}
+          action={() => deletePost()}
         />
       </View>
       <View style={s.rightMapButton}>
@@ -341,10 +418,7 @@ const Bar = ({
           style={'green'}
           customStyle={{height: 39}}
           imageStyle={{borderRadius: 20}}
-          action={() => {
-            setIsPublishingMode(false);
-            setActiveElement(renderBarStatus);
-          }}
+          action={() => addPostRequest()}
         />
       </View>
     </Fragment>
@@ -420,6 +494,7 @@ const Bar = ({
         <ScrollView style={s.scrollBox} scrollEnabled={barShowed}>
           {activeElement}
           {renderButtonsRow}
+          {renderPostInput}
           {renderMap}
           <Leaderboard />
         </ScrollView>

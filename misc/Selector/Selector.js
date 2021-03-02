@@ -5,10 +5,15 @@ import {activitiesImagePath} from '../../api/routes';
 import agreeOn from '../../assets/icons/ic-agreeOn.png';
 import agreeOff from '../../assets/icons/ic-agreeOff.png';
 
-const Selector = ({activities, onActivityChange}) => {
+const Selector = ({
+  toggle,
+  activities,
+  selectedActivities,
+  onActivityChange,
+}) => {
   const data = activities;
 
-  const [activeItems, setActiveItems] = useState(['1']);
+  const [activeItems, setActiveItems] = useState('1');
 
   const checkActiveItems = (id) => {
     const isIncluded = activeItems.includes(id);
@@ -29,6 +34,10 @@ const Selector = ({activities, onActivityChange}) => {
   useEffect(() => {
     onActivityChange(activeItems);
   }, [activeItems]);
+
+  useEffect(() => {
+    setActiveItems(selectedActivities);
+  }, [toggle]);
 
   return (
     <View style={s.container}>

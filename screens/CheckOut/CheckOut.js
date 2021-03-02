@@ -1,16 +1,18 @@
 import React from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import BarStatus from '../../misc/BarStatus/BarStatus';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import Button from '../../misc/Button/Button';
 import Header from '../../misc/Header/Header';
+import BarStatus from '../../misc/BarStatus/BarStatus';
 import LeaderboardComponent from '../../misc/Leaderboard/Leaderboard';
 
-const Leaderboard = () => {
+const CheckOut = ({route}) => {
+  const data = {...route.params};
+
   return (
     <ScrollView style={s.container}>
       <Header />
       <View style={s.wrapper}>
-        <BarStatus title={'Location name'} />
+        <BarStatus title={data.title} image={data.image} imageType={'link'} />
       </View>
       <View style={s.wrapper}>
         <Button text={'Go to location'} style={'orange'} />
@@ -20,7 +22,7 @@ const Leaderboard = () => {
   );
 };
 
-export default Leaderboard;
+export default CheckOut;
 
 const s = StyleSheet.create({
   container: {

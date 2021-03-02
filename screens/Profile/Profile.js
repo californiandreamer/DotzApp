@@ -44,7 +44,6 @@ const Profile = ({route}) => {
   const [profileData, setProfileData] = useState({});
   const [currentActivity, setCurrentActivity] = useState(null);
   const [socket, setSocket] = useState(null);
-  console.log('currentActivity', currentActivity);
 
   const getActiveTab = (value) => {
     setActiveTab(value);
@@ -80,6 +79,7 @@ const Profile = ({route}) => {
       currentActivity: parsedData.profile_current_act,
       activities: parsedData.activities,
       image: parsedData.profile_img_ava,
+      posts: parsedData.posts,
     });
     getActivities(parsedData.activities);
   };
@@ -160,10 +160,23 @@ const Profile = ({route}) => {
   const renderFeed = (
     <View style={s.tabContent}>
       <Text style={s.title}>Latests posts</Text>
-      <View style={s.wrapper}>
-        <Text style={s.text}>My best time on Random Route: 50s</Text>
-      </View>
-      <View style={s.wrapper}>
+      {profileData.posts &&
+        profileData.posts.map((post) => (
+          <View style={s.post} key={post.pp_id}>
+            <Text style={s.text}>{post.pp_content}</Text>
+            <View style={s.dotWrapper}>
+              <TouchableOpacity style={s.dotBtn} activeOpacity={0.8}>
+                <Image style={s.dotImg} source={DotImg} />
+                <Text style={s.dotText}>Dot it</Text>
+              </TouchableOpacity>
+              <Text style={s.dotCount}>1</Text>
+            </View>
+          </View>
+        ))}
+    </View>
+  );
+  {
+    /* <View style={s.wrapper}>
         <MapboxGL.MapView
           style={s.map}
           compassEnabled={false}
@@ -172,23 +185,15 @@ const Profile = ({route}) => {
           <MapboxGL.Camera zoomLevel={12} followUserLocation />
           <MapboxGL.UserLocation />
         </MapboxGL.MapView>
-      </View>
-      <View style={s.dotWrapper}>
-        <TouchableOpacity style={s.dotBtn} activeOpacity={0.8}>
-          <Image style={s.dotImg} source={DotImg} />
-          <Text style={s.dotText}>Dot it</Text>
-        </TouchableOpacity>
-        <Text style={s.dotCount}>1</Text>
-      </View>
-    </View>
-  );
+      </View> */
+  }
 
   return (
     <ScrollView style={s.container}>
       <Header
         title={'Profile'}
         icon={SettingsImg}
-        action={isOwnProfile ? () => stackNavigate('ChooseActivity') : null}
+        action={isOwnProfile ? () => stackNavigate('Settings') : null}
       />
       <Image style={s.background} source={GradientImg} />
       <View style={s.avatar}>
@@ -308,6 +313,10 @@ const s = StyleSheet.create({
   tabContent: {
     width: '100%',
     paddingVertical: 16,
+  },
+  post: {
+    width: '100%',
+    paddingVertical: 10,
   },
   title: {
     width: '100%',

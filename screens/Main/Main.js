@@ -28,6 +28,8 @@ import {
   activitiesPath,
   profileImagePath,
 } from '../../api/routes';
+import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
+import {privacyBubbleData} from '../../data';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -71,7 +73,13 @@ const Main = () => {
 
   const connectToSocket = async () => {
     const token = await getAccessToken();
-    const headers = await getHeadersWithToken();
+    const profile = await getItem('profile');
+    const parsedProfile = JSON.parse(profile);
+    const privacyBubble = parsedProfile.profile_privacy_buble;
+    const parsedPrivacyBubble = JSON.parse(privacyBubble);
+    const distance = calculateByCoordinates(userLocation, parsedPrivacyBubble);
+    const distanceInMiles = distance * 1.36;
+
     const conn = new WebSocket(`${socketUrl}${token}`);
     const timeStamp = +new Date();
     const stringedUserLocation = JSON.stringify(userLocation);
@@ -83,7 +91,9 @@ const Main = () => {
     const stringed = JSON.stringify(obj);
 
     conn.onopen = (e) => {
-      conn.send(stringed);
+      if (distanceInMiles > privacyBubbleData.distance) {
+        conn.send(stringed);
+      }
     };
 
     conn.onmessage = (e) => {

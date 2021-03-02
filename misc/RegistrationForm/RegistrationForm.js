@@ -3,9 +3,17 @@ import s from './RegistrationForm.s';
 import {View, Text, Image, TouchableOpacity, TextInput} from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
 import EditImg from '../../assets/icons/ic-edit.png';
+import {profileImageUrl} from '../../api/api';
 
-const RegistrationForm = ({onNameChange, onCityChange, onImageLoaded}) => {
-  const [uploadedImage, setUploadedImage] = useState({});
+const RegistrationForm = ({
+  nameValue,
+  cityValue,
+  imageUri,
+  onNameChange,
+  onCityChange,
+  onImageLoaded,
+}) => {
+  const [uploadedImage, setUploadedImage] = useState(null);
 
   const chooseFile = () => {
     let options = {
@@ -38,7 +46,14 @@ const RegistrationForm = ({onNameChange, onCityChange, onImageLoaded}) => {
     <View style={s.container}>
       <View style={s.wrapper}>
         <View style={s.avatar}>
-          <Image style={s.avatarImg} source={{uri: uploadedImage.uri}} />
+          <Image
+            style={s.avatarImg}
+            source={
+              uploadedImage !== null
+                ? {uri: uploadedImage.uri}
+                : {uri: `${profileImageUrl}${imageUri}`}
+            }
+          />
           <TouchableOpacity
             style={s.editAvatarBtn}
             activeOpacity={0.8}
@@ -53,6 +68,7 @@ const RegistrationForm = ({onNameChange, onCityChange, onImageLoaded}) => {
             <Text style={s.title}>User Name</Text>
             <TextInput
               style={s.input}
+              value={nameValue}
               onChange={(e) => {
                 e.persist();
                 onNameChange(e.nativeEvent.text);
@@ -63,6 +79,7 @@ const RegistrationForm = ({onNameChange, onCityChange, onImageLoaded}) => {
             <Text style={s.title}>City</Text>
             <TextInput
               style={s.input}
+              value={cityValue}
               onChange={(e) => {
                 e.persist();
                 onCityChange(e.nativeEvent.text);

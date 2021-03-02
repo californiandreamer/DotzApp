@@ -34,7 +34,8 @@ const LoginForm = ({action, onError}) => {
         <TextInput
           style={s.input}
           keyboardType="email-address"
-          textContentType="emailAddress"
+          autoCapitalize="none"
+          // textContentType="emailAddress"
           // autoCompleteType="email"
           onChange={(e) => {
             e.persist();
@@ -47,6 +48,7 @@ const LoginForm = ({action, onError}) => {
         <TextInput
           style={s.input}
           textContentType="password"
+          autoCapitalize="none"
           secureTextEntry
           onChange={(e) => {
             e.persist();

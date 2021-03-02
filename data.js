@@ -127,3 +127,18 @@ export const privacyBubbleContent = {
   text:
     'You will not be tracked or displayed while you presenting in that area',
 };
+
+export const postAddedContent = {
+  title: 'Is done',
+  text: 'Post was successfully added',
+};
+
+export const postDeleteContent = {
+  title: 'Post deleting',
+  text: 'Are you sure you want to delte this post?',
+};
+
+export const profileUpdatedContent = {
+  title: 'Profile updated',
+  text: 'Your profile data was successfully updated',
+};

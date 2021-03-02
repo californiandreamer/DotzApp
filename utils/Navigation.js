@@ -16,12 +16,13 @@ import Friends from '../screens/Friends/Friends';
 import Locations from '../screens/Locations/Locations';
 import FilteredLocations from '../screens/FilteredLocations/FilteredLocations';
 import Cities from '../screens/Cities/Cities';
-import Leaderboard from '../screens/Leaderboard/Leaderboard';
+import CheckOut from '../screens/CheckOut/CheckOut';
 import MessageIcon from '../assets/icons/Ic-Message2.png';
 import PersonIcon from '../assets/icons/Ic-Profile-menu.png';
 import FriendsIcon from '../assets/icons/Ic-User.png';
 import SavedIcon from '../assets/icons/Ic-Star.png';
 import LocationIcon from '../assets/icons/ic-Location-menu.png';
+import Settings from '../screens/Settings/Settings';
 
 const Stack = createStackNavigator();
 
@@ -36,7 +37,7 @@ const DrawerNavigator = () => {
 
   return (
     <Drawer.Navigator
-      initialRouteName="Locations"
+      initialRouteName="FilteredLocations"
       drawerStyle={{backgroundColor: '#F18303', opacity: 0.9}}
       drawerContentOptions={{
         labelStyle: {
@@ -89,7 +90,6 @@ const DrawerNavigator = () => {
       />
       <Drawer.Screen name="Main" component={Main} />
       <Drawer.Screen name="Cities" component={Cities} />
-      <Drawer.Screen name="Leaderboard" component={Leaderboard} />
     </Drawer.Navigator>
   );
 };
@@ -109,8 +109,10 @@ const Navigation = () => (
       <Stack.Screen name="Root" component={DrawerNavigator} />
       <Stack.Screen name="Main" component={Main} />
       <Stack.Screen name="Dialog" component={Dialog} />
-      <Drawer.Screen name="Profile" component={Profile} />
-      <Drawer.Screen name="FilteredLocations" component={FilteredLocations} />
+      <Stack.Screen name="Profile" component={Profile} />
+      <Stack.Screen name="Settings" component={Settings} />
+      <Stack.Screen name="CheckOut" component={CheckOut} />
+      <Stack.Screen name="FilteredLocations" component={FilteredLocations} />
     </Stack.Navigator>
   </NavigationContainer>
 );

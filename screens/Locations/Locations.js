@@ -1,4 +1,4 @@
-import React, {Fragment, useEffect, useMemo, useRef, useState} from 'react';
+import React, {Fragment, useEffect, useRef, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,7 +13,14 @@ import * as turf from '@turf/turf';
 // import * as turf from '@turf/helpers'; // need to remove ?
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {useNavigation, DrawerActions} from '@react-navigation/native';
-import {activitiesImageUrl, mapBoxToken, socketUrl} from '../../api/api';
+import {defaultLocation} from '../../data';
+import {activitiesImageUrl, mapBoxToken} from '../../api/api';
+import {addLocationPath, locationsPath} from '../../api/routes';
+import {getHeadersWithAccessToken} from '../../hooks/useAccessToken';
+import {axiosGet, axiosPost} from '../../hooks/useAxios';
+import {generateRandomId} from '../../hooks/useIdGenerator';
+import {getItem} from '../../hooks/useAsyncStorage';
+import {getHeadersWithToken} from '../../hooks/useApiData';
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import PlusImg from '../../assets/icons/ic-plus.png';
 import RouteImg from '../../assets/icons/ic-plus1.png';
@@ -24,23 +31,13 @@ import NextImg from '../../assets/icons/icon-siguiente.png';
 import Alert from '../../misc/Alert/Alert';
 import Bar from '../../misc/Bar/Bar';
 import PopUp from '../../misc/PopUp/PopUp';
-import {
-  getAccessToken,
-  getHeadersWithAccessToken,
-} from '../../hooks/useAccessToken';
-import {axiosGet, axiosPost} from '../../hooks/useAxios';
-import {generateRandomId} from '../../hooks/useIdGenerator';
-import {defaultLocation} from '../../data';
-import {getItem} from '../../hooks/useAsyncStorage';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
 const Locations = () => {
-  const path = '/locations';
   const navigation = useNavigation();
 
   const [locationsData, setLocationsData] = useState([]);
-  console.log('locationsData', locationsData);
   const [openOptions, setOpenOptions] = useState(false);
   const [barVisible, setBarVisible] = useState(false);
   const [barProps, setBarProps] = useState({});
@@ -50,7 +47,8 @@ const Locations = () => {
   const [alertProps, setAlertProps] = useState({});
   const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
 
-  const [toggle, setToggle] = useState(false);
+  const [routeToggle, setRouteToggle] = useState(false);
+  const [placeToggle, setPlaceToggle] = useState(false);
   const [activeLocation, setActiveLocation] = useState(null);
   const [userStartLocation, setUserStartLocation] = useState(defaultLocation);
   const [alertCityValue, setAlertCityValue] = useState('No city');
@@ -58,9 +56,7 @@ const Locations = () => {
   const [routeDrawerActive, setRouteDrawerActive] = useState(false);
   const [placeDrawerActive, setPlaceDrawerActive] = useState(false);
   const [drawedRouteCoordinates, setDrawedRouteCoordinates] = useState([]);
-  const [drawedPlaceCoordinates, setDrawedPlaceCoordinates] = useState(
-    userStartLocation,
-  );
+  const [drawedPlaceCoordinates, setDrawedPlaceCoordinates] = useState([]);
 
   const routeBtnVal = useRef(new Animated.Value(30)).current;
   const placeBtnVal = useRef(new Animated.Value(30)).current;
@@ -150,7 +146,8 @@ const Locations = () => {
   };
 
   const cancelAdding = () => {
-    setAlertInputValue('');
+    setAlertInputValue('No name');
+    setAlertCityValue('No city');
     setAlertVisible(false);
     setRouteDrawerActive(false);
     setDrawedRouteCoordinates([]);
@@ -159,7 +156,7 @@ const Locations = () => {
 
   const getLocations = async () => {
     const headers = await getHeadersWithAccessToken();
-    const locations = await axiosGet(path, headers);
+    const locations = await axiosGet(locationsPath, headers);
     setLocationsData(locations);
   };
 
@@ -168,7 +165,10 @@ const Locations = () => {
     setDrawedRouteCoordinates((prev) => [...prev, touchCoordinates]);
   };
 
-  const placePoint = turf.geometry('Point', drawedPlaceCoordinates);
+  const placePoint =
+    drawedPlaceCoordinates.length === 0
+      ? turf.geometry('Point', userStartLocation)
+      : turf.geometry('Point', drawedPlaceCoordinates);
   const drawPlace = (e) => {
     const touchCoordinates = e.geometry.coordinates;
     setDrawedPlaceCoordinates(touchCoordinates);
@@ -186,24 +186,31 @@ const Locations = () => {
     }
   };
 
-  const addLocaitonRequest = async () => {
+  const addLocaitonRequest = async (type) => {
+    const headers = await getHeadersWithToken('urlencoded');
     const profileData = await getItem('profile');
     const parsedProfileData = JSON.parse(profileData);
     const currentActivity = parsedProfileData.profile_current_act;
 
-    const start = JSON.stringify(drawedRouteCoordinates[0]);
-    const finish = JSON.stringify(
-      drawedRouteCoordinates[drawedRouteCoordinates.length - 1],
-    );
-    const routes = JSON.stringify(drawedRouteCoordinates);
+    let routes;
+    let start;
+    let finish;
 
-    const token = await getAccessToken();
-    const headers = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    };
+    if (type === 'route') {
+      routes = JSON.stringify(drawedRouteCoordinates);
+      start = JSON.stringify(drawedRouteCoordinates[0]);
+      finish = JSON.stringify(
+        drawedRouteCoordinates[drawedRouteCoordinates.length - 1],
+      );
+    } else if (type === 'place' && drawedPlaceCoordinates.length !== 0) {
+      routes = JSON.stringify(drawedPlaceCoordinates);
+      start = JSON.stringify(drawedPlaceCoordinates);
+      finish = JSON.stringify(drawedPlaceCoordinates);
+    } else {
+      routes = undefined;
+      start = undefined;
+      finish = undefined;
+    }
 
     let postData = new URLSearchParams();
     postData.append('activity_id', currentActivity);
@@ -213,7 +220,7 @@ const Locations = () => {
     postData.append('loc_p_cors_finish', finish);
     postData.append('loc_p_cors_all', routes);
 
-    const request = await axiosPost('locs_p/add', postData, headers);
+    const request = await axiosPost(addLocationPath, postData, headers);
     console.log('res', request);
     cancelAdding();
   };
@@ -248,7 +255,10 @@ const Locations = () => {
           : 'Drop a Pin on a Place you want to submit',
       type: 'choice',
       action1: () => cancelAdding(),
-      action2: () => setToggle((prev) => !prev), // toggle because function doesn't see state updates
+      action2: () =>
+        type === 'route'
+          ? setRouteToggle((prev) => !prev)
+          : setPlaceToggle((prev) => !prev), // toggle because function doesn't see state updates
       closeAction: () => cancelAdding(),
     });
   };
@@ -259,8 +269,12 @@ const Locations = () => {
   }, []);
 
   useEffect(() => {
-    addLocaitonRequest();
-  }, [toggle]);
+    addLocaitonRequest('route');
+  }, [routeToggle]);
+
+  useEffect(() => {
+    addLocaitonRequest('place');
+  }, [placeToggle]);
 
   const renderBurger = (
     <View style={[s.buttonOuter, {left: 16}]} key="burger">
@@ -461,7 +475,9 @@ const Locations = () => {
       {openOptions ? <View style={s.mask} /> : null}
       {renderOptions}
       {alertVisible ? <Alert {...alertProps} /> : null}
-      {popUpVisible ? <PopUp {...popUpProps} /> : null}
+      {popUpVisible ? (
+        <PopUp {...popUpProps} action1={addLocaitonRequest} />
+      ) : null}
       {barVisible ? <Bar {...barProps} testAction={hideBar} /> : null}
     </View>
   );
