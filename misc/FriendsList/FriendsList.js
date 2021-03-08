@@ -21,6 +21,7 @@ const FriendsList = ({
   approveFrendshipAction,
   onRefresh,
 }) => {
+  console.log('list', list);
   return (
     <ScrollView
       style={s.container}
@@ -67,9 +68,9 @@ const FriendsList = ({
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={[s.profileButton, {opacity: type === 'Friends' ? 1 : 0.7}]}
+              style={s.profileButton}
               activeOpacity={0.8}
-              disabled={type === 'Friends' ? false : true}
+              // disabled={type === 'Friends' ? false : true}
               onPress={() =>
                 showProfileAction('Profile', {
                   id: item.app_user_id,

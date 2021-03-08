@@ -1,5 +1,5 @@
 import React from 'react';
-import {Image, Text} from 'react-native';
+import {Image} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createDrawerNavigator} from '@react-navigation/drawer';
@@ -23,6 +23,7 @@ import FriendsIcon from '../assets/icons/Ic-User.png';
 import SavedIcon from '../assets/icons/Ic-Star.png';
 import LocationIcon from '../assets/icons/ic-Location-menu.png';
 import Settings from '../screens/Settings/Settings';
+import Start from '../screens/Start/Start';
 
 const Stack = createStackNavigator();
 
@@ -37,7 +38,7 @@ const DrawerNavigator = () => {
 
   return (
     <Drawer.Navigator
-      initialRouteName="FilteredLocations"
+      initialRouteName="Locations"
       drawerStyle={{backgroundColor: '#F18303', opacity: 0.9}}
       drawerContentOptions={{
         labelStyle: {
@@ -101,6 +102,7 @@ const Navigation = () => (
       screenOptions={{
         headerShown: false,
       }}>
+      <Stack.Screen name="Start" component={Start} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="SignUp" component={SignUp} />
       <Stack.Screen name="Registration" component={Registration} />
@@ -108,6 +110,7 @@ const Navigation = () => (
       <Stack.Screen name="ChooseActivity" component={ChooseActivity} />
       <Stack.Screen name="Root" component={DrawerNavigator} />
       <Stack.Screen name="Main" component={Main} />
+      <Stack.Screen name="Locations" component={Locations} />
       <Stack.Screen name="Dialog" component={Dialog} />
       <Stack.Screen name="Profile" component={Profile} />
       <Stack.Screen name="Settings" component={Settings} />

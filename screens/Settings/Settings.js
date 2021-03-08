@@ -4,6 +4,7 @@ import {useNavigation} from '@react-navigation/native';
 import * as turf from '@turf/turf';
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {
+  cities,
   defaultLocation,
   errorsContent,
   privacyBubbleData,
@@ -18,6 +19,7 @@ import Button from '../../misc/Button/Button';
 import Selector from '../../misc/Selector/Selector';
 import RegistrationForm from '../../misc/RegistrationForm/RegistrationForm';
 import LoadingGif from '../../assets/icons/loading.gif';
+import CitySelector from '../../misc/CitySelector/CitySelector';
 
 const Settings = ({route}) => {
   const navigation = useNavigation();
@@ -31,6 +33,7 @@ const Settings = ({route}) => {
   const [nameValue, setNameValue] = useState('');
   const [cityValue, setCityValue] = useState('');
   const [imageUri, setImageUri] = useState('');
+  const [citySelectorVisible, setCitySelectorVisible] = useState(false);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [privacyBubble, setPrivacyBubble] = useState(defaultLocation);
   const [selectedActivities, setSelectedActivities] = useState([]);
@@ -141,6 +144,14 @@ const Settings = ({route}) => {
     await axiosGet(activitiesPath).then((res) => setActivitiesData(res));
   };
 
+  const showCitySelector = () => {
+    setCitySelectorVisible(true);
+  };
+
+  const hideCitySelector = () => {
+    setCitySelectorVisible(false);
+  };
+
   const hideAlert = () => {
     setTimeout(() => {
       setError({isVisible: false, title: '', text: ''});
@@ -185,6 +196,17 @@ const Settings = ({route}) => {
     </MapboxGL.MapView>
   );
 
+  const renderCitySelector = citySelectorVisible ? (
+    <CitySelector
+      data={cities}
+      onCityChange={(city) => {
+        setCityValue(city);
+        hideCitySelector();
+      }}
+      hideCitySelector={hideCitySelector}
+    />
+  ) : null;
+
   useEffect(() => {
     getActivities();
     getProfileData();
@@ -193,6 +215,7 @@ const Settings = ({route}) => {
   return (
     <Fragment>
       {renderAlert}
+      {renderCitySelector}
       <ScrollView style={s.container}>
         <View style={s.wrapper}>
           <View style={s.wrapper}>
@@ -200,8 +223,8 @@ const Settings = ({route}) => {
               nameValue={nameValue}
               cityValue={cityValue}
               imageUri={imageUri}
+              showCitySelector={showCitySelector}
               onNameChange={(name) => setNameValue(name)}
-              onCityChange={(city) => setCityValue(city)}
               onImageLoaded={(image) => setUploadedImage(image)}
             />
           </View>

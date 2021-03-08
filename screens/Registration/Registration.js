@@ -2,13 +2,14 @@ import React, {Fragment, useEffect, useState} from 'react';
 import {StyleSheet, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {axiosGet} from '../../hooks/useAxios';
-import {errorsContent} from '../../data';
+import {cities, errorsContent} from '../../data';
 import {activitiesPath} from '../../api/routes';
 import Button from '../../misc/Button/Button';
 import Selector from '../../misc/Selector/Selector';
 import RegistrationForm from '../../misc/RegistrationForm/RegistrationForm';
 import Alert from '../../misc/Alert/Alert';
 import LoadingGif from '../../assets/icons/loading.gif';
+import CitySelector from '../../misc/CitySelector/CitySelector';
 
 const Registration = ({route}) => {
   const navigation = useNavigation();
@@ -20,6 +21,7 @@ const Registration = ({route}) => {
   });
   const [nameValue, setNameValue] = useState('');
   const [cityValue, setCityValue] = useState('');
+  const [citySelectorVisible, setCitySelectorVisible] = useState(false);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [activitiesData, setActivitiesData] = useState([
@@ -80,6 +82,7 @@ const Registration = ({route}) => {
   const getActivities = async () => {
     const request = await axiosGet(activitiesPath)
       .then((res) => {
+        console.log('res', res);
         setActivitiesData(res);
       })
       .catch((error) => console.log('error', error));
@@ -95,6 +98,18 @@ const Registration = ({route}) => {
     }, 500);
   };
 
+  const showCitySelector = () => {
+    setCitySelectorVisible(true);
+  };
+
+  const hideCitySelector = () => {
+    setCitySelectorVisible(false);
+  };
+
+  useEffect(() => {
+    getActivities();
+  }, []);
+
   const renderAlert = error.isVisible ? (
     <Alert
       title={error.title}
@@ -104,25 +119,35 @@ const Registration = ({route}) => {
     />
   ) : null;
 
-  useEffect(() => {
-    getActivities();
-  }, []);
+  const renderCitySelector = citySelectorVisible ? (
+    <CitySelector
+      data={cities}
+      onCityChange={(city) => {
+        setCityValue(city);
+        hideCitySelector();
+      }}
+      hideCitySelector={hideCitySelector}
+    />
+  ) : null;
 
   return (
     <Fragment>
       {renderAlert}
+      {renderCitySelector}
       <ScrollView style={s.container}>
         <View style={s.wrapper}>
           <View style={s.wrapper}>
             <RegistrationForm
+              cityValue={cityValue}
+              showCitySelector={showCitySelector}
               onNameChange={(name) => setNameValue(name)}
-              onCityChange={(city) => setCityValue(city)}
               onImageLoaded={(image) => setUploadedImage(image)}
             />
           </View>
           <View style={s.wrapper}>
             <Selector
               activities={activitiesData}
+              selectedActivities={selectedActivities}
               onActivityChange={(activities) =>
                 setSelectedActivities(activities)
               }

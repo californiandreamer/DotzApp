@@ -46,10 +46,6 @@ const PrivacyBubble = ({route}) => {
     navigation.navigate(route);
   };
 
-  const handleUserLocation = (e) => {
-    setCircleCoordinates([e.coords.longitude, e.coords.latitude]);
-  };
-
   const handleMapPress = (e) => {
     setCircleCoordinates(e.geometry.coordinates);
   };
@@ -139,7 +135,7 @@ const PrivacyBubble = ({route}) => {
         <MapboxGL.Camera zoomLevel={8} followUserLocation />
         <MapboxGL.UserLocation
           minDisplacement={100000}
-          onUpdate={(e) => handleUserLocation(e)}
+          // onUpdate={(e) => handleUserLocation(e)}
         />
         <MapboxGL.PointAnnotation id="Point" coordinate={circleCoordinates} />
         {renderCircle}

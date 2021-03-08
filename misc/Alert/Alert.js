@@ -60,8 +60,8 @@ const Alert = ({
       case 'choice':
         return (
           <View style={s.wrapper}>
-            <Button text={'Close'} action={action1} />
-            <Button text={'Next'} style={'orange'} action={action2} />
+            <Button text={'Close'} action={hideAlert} />
+            <Button text={'Next'} style={'orange'} action={action1} />
           </View>
         );
         break;

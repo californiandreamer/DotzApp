@@ -13,7 +13,9 @@ const Selector = ({
 }) => {
   const data = activities;
 
-  const [activeItems, setActiveItems] = useState('1');
+  const [activeItems, setActiveItems] = useState(['1']);
+  console.log('activeItems', activeItems);
+  console.log('data', data);
 
   const checkActiveItems = (id) => {
     const isIncluded = activeItems.includes(id);

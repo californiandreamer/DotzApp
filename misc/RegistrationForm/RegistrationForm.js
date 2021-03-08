@@ -10,7 +10,7 @@ const RegistrationForm = ({
   cityValue,
   imageUri,
   onNameChange,
-  onCityChange,
+  showCitySelector,
   onImageLoaded,
 }) => {
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -77,14 +77,11 @@ const RegistrationForm = ({
           </View>
           <View style={s.wrapper}>
             <Text style={s.title}>City</Text>
-            <TextInput
-              style={s.input}
-              value={cityValue}
-              onChange={(e) => {
-                e.persist();
-                onCityChange(e.nativeEvent.text);
-              }}
-            />
+            <TouchableOpacity
+              style={s.citySelectorBtn}
+              onPress={showCitySelector}>
+              <Text style={s.citySelectorBtnText}>{cityValue}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>

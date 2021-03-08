@@ -5,6 +5,7 @@ import PolygonImg from '../../assets/icons/ic-Polygon.png';
 import {formatTime} from '../../utils/TimeFormater';
 
 const Timer = ({time, speed}) => {
+  console.log('speed', speed);
   return (
     <View style={s.container}>
       <View style={s.row}>

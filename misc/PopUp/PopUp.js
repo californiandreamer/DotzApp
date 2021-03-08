@@ -13,12 +13,24 @@ import NextImg from '../../assets/icons/icon-siguiente.png';
 import CloseImg from '../../assets/icons/ic-close2.png';
 import GirlImg from '../../assets/images/girl.jpg';
 import BlastMessageImg from '../../assets/icons/ic-message.png';
-import {activities} from '../../data';
+// import {activities} from '../../data';
+import {profileImageUrl} from '../../api/api';
+import {activitiesImagePath, activitiesPath} from '../../api/routes';
 
-const PopUp = ({title, name, text, type, action1, action2, closeAction}) => {
-  const data = activities;
-
-  const [activeItem, setActiveItem] = useState(1);
+const PopUp = ({
+  title,
+  name,
+  text,
+  type,
+  image,
+  activities,
+  isActionDisabled,
+  onContentChange,
+  onActivityChange,
+  action1,
+  closeAction,
+}) => {
+  const [activeItem, setActiveItem] = useState(null);
 
   const animationVal = useRef(new Animated.Value(-200)).current;
 
@@ -36,6 +48,7 @@ const PopUp = ({title, name, text, type, action1, action2, closeAction}) => {
       duration: 500,
       useNativeDriver: false,
     }).start();
+    closeAction();
   };
 
   useEffect(() => {
@@ -53,14 +66,25 @@ const PopUp = ({title, name, text, type, action1, action2, closeAction}) => {
           <View style={s.wrapper}>
             <View style={s.row}>
               <Text style={s.rowText}>To:</Text>
-              {data.map((item) => (
-                <View style={s.item}>
+              {activities?.map((item) => (
+                <View style={s.item} key={item.activity_id}>
                   <TouchableOpacity
-                    style={activeItem === item.id ? s.activeButton : s.button}
-                    key={item.id}
+                    style={
+                      activeItem === item.activity_id
+                        ? s.activeButton
+                        : s.button
+                    }
                     activeOpacity={0.8}
-                    onPress={() => setActiveItem(item.id)}>
-                    <Image style={s.image} source={item.image} />
+                    onPress={() => {
+                      onActivityChange(item.activity_id);
+                      setActiveItem(item.activity_id);
+                    }}>
+                    <Image
+                      style={s.image}
+                      source={{
+                        uri: `${activitiesImagePath}${item.activity_img}`,
+                      }}
+                    />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -69,16 +93,21 @@ const PopUp = ({title, name, text, type, action1, action2, closeAction}) => {
                 textAlignVertical={'top'}
                 multiline
                 numberOfLines={4}
+                onChange={(e) => {
+                  e.persist();
+                  onContentChange(e.nativeEvent.text);
+                }}
               />
             </View>
           </View>
           <View style={s.wrapper}>
-            <Button text={'Close'} action={action1} />
+            <Button text={'Close'} action={hideAlert} />
             <Button
+              isDisabled={isActionDisabled}
               text={'Send'}
               style={'orange'}
               customStyle={{marginBottom: 0}}
-              action={action2}
+              action={action1}
             />
           </View>
         </View>
@@ -88,23 +117,23 @@ const PopUp = ({title, name, text, type, action1, action2, closeAction}) => {
             <Text style={s.title}>{title}</Text>
           </View>
           <View style={s.wrapper}>
-            <Image style={s.avatar} source={GirlImg} />
-            <Text style={s.name}>Megan Rain</Text>
+            <Image
+              style={s.avatar}
+              source={{uri: `${profileImageUrl}${image}`}}
+            />
+            <Text style={s.name}>{name}</Text>
           </View>
           <View style={s.wrapper}>
-            <Text style={s.description}>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Odio id
-              maiores eius culpa tempora error tempore.
-            </Text>
+            <Text style={s.description}>{text}</Text>
           </View>
           <View style={s.wrapper}>
             <View style={s.wrapper}>
-              <Button text={'Close'} action={action1} />
+              <Button text={'Close'} action={hideAlert} />
               <Button
                 text={"I'm in"}
                 style={'orange'}
                 customStyle={{marginBottom: 0}}
-                action={action2}
+                action={action1}
               />
             </View>
           </View>

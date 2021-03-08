@@ -103,7 +103,7 @@ export default StyleSheet.create({
   avatar: {
     width: 68,
     height: 68,
-    resizeMode: 'contain',
+    resizeMode: 'cover',
     borderRadius: 68,
   },
   name: {

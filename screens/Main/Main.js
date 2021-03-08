@@ -18,6 +18,7 @@ import Alert from '../../misc/Alert/Alert';
 import PopUp from '../../misc/PopUp/PopUp';
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import BlastPinImg from '../../assets/icons/ic-blast-pin.png';
+import LocationImg from '../../assets/icons/ic-Location2.png';
 import BlastMessageImg from '../../assets/icons/ic-message.png';
 import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 import NextImg from '../../assets/icons/icon-siguiente.png';
@@ -30,6 +31,7 @@ import {
 } from '../../api/routes';
 import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
 import {privacyBubbleData} from '../../data';
+import {TextInput} from 'react-native-gesture-handler';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -38,28 +40,28 @@ const Main = () => {
 
   const [usersData, setUsersData] = useState([]);
   const [userLocation, setUserLocation] = useState([]);
-  const [userId, setUserId] = useState([]);
+  const [userId, setUserId] = useState('');
+  const [blastMessageContent, setBlastMessageContent] = useState('');
+  const [blastMessageActivity, setBlastMessageActivity] = useState('');
+  const [blastMessageToggle, setBlastMessageToggle] = useState(false);
+  const [blastPinContent, setBlastPinContent] = useState("Let's meet here");
+  const [blastPinCoordinates, setBlastPinCoordinates] = useState(userLocation);
+  const [blastPinMode, setBlastPinMode] = useState(false);
+  const [blastPinToggle, setBlastPinToggle] = useState(false);
+  const [userCurrentActivity, setUserCurrentActivity] = useState('1');
   const [activities, setActivities] = useState([]);
   const [alertVisible, setAlertVisible] = useState(false);
   const [popUpVisible, setPopUpVisible] = useState(false);
   const [popUpProps, setPopUpProps] = useState({});
   const [alertProps, setAlertProps] = useState({});
-  const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
   const [activeUser, setActiveUser] = useState(null);
-  console.log('usersData', usersData);
-  console.log('userId', userId);
+  const [socket, setSocket] = useState(null);
 
-  const getUserLocationPermision = async () => {
-    if (Platform.OS === 'android') {
-      const isGranted = await MapboxGL.requestAndroidLocationPermissions();
-      setIsLocPermitionGranted(isGranted);
-    }
-  };
-
-  const getUserId = async () => {
+  const getUserData = async () => {
     const profile = await getItem('profile');
     const parsedProfile = JSON.parse(profile);
     setUserId(parsedProfile.app_user_id);
+    setUserCurrentActivity(parsedProfile.profile_current_act);
   };
 
   const getActivities = async () => {
@@ -81,9 +83,11 @@ const Main = () => {
     const distanceInMiles = distance * 1.36;
 
     const conn = new WebSocket(`${socketUrl}${token}`);
+    setSocket(conn);
+
     const timeStamp = +new Date();
-    const stringedUserLocation = JSON.stringify(userLocation);
     const stringedTimeStamp = JSON.stringify(timeStamp);
+    const stringedUserLocation = JSON.stringify(userLocation);
     const obj = {
       my_cur_loc: stringedUserLocation,
       msg_timestamp_sent: stringedTimeStamp,
@@ -104,11 +108,102 @@ const Main = () => {
         const users = parsedData.users;
         setUsersData(users);
       }
+      if (parsedData.hasOwnProperty('bPin_ev_author')) {
+        const senderId = parsedData.bPin_ev_author;
+        const eventId = parsedData.bPin_ev_id;
+        const findedUser = usersData.find(
+          (item) => item.c_user_id === senderId,
+        );
+        const findedUserName = findedUser.c_name;
+        const findedUserImage = findedUser.c_user_profile.profile_img_ava;
+
+        if (senderId !== userId) {
+          setPopUpVisible(true);
+          setPopUpProps({
+            name: findedUserName,
+            image: findedUserImage,
+            title: 'Blast Pin',
+            type: 'receive',
+            text: parsedData.bPin_msg,
+            action1: () => confirmBlastPin(eventId),
+            closeAction: hidePopUp,
+          });
+        } else {
+          setAlertVisible(true);
+          setAlertProps({
+            type: 'error',
+            title: 'Success',
+            text:
+              'Your blast pin was received by each user with choosen activity',
+            closeAction: hideAlert,
+          });
+        }
+      }
+      if (parsedData.hasOwnProperty('bPin_ev_joiner')) {
+        const senderId = parsedData.bPin_ev_joiner;
+        const findedUser = usersData.find(
+          (item) => item.c_user_id === senderId,
+        );
+        const findedUserName = findedUser.c_name;
+
+        if (senderId !== userId) {
+          setAlertVisible(true);
+          setAlertProps({
+            type: 'error',
+            title: 'Good news',
+            text: `${findedUserName} confirmed invitation to your event`,
+            closeAction: hideAlert,
+          });
+        } else {
+          setAlertVisible(true);
+          setAlertProps({
+            type: 'error',
+            title: 'Success',
+            text: 'You confirmed invitation to event',
+            closeAction: hideAlert,
+          });
+        }
+      }
+      if (parsedData.hasOwnProperty('blast_msg')) {
+        const senderId = parsedData.blast_author_user_id;
+        const blastActivity = parsedData.blast_activities;
+        const findedUser = usersData.find(
+          (item) => item.c_user_id === senderId,
+        );
+        const findedUserName = findedUser.c_name;
+        const findedUserImage = findedUser.c_user_profile.profile_img_ava;
+
+        if (senderId !== userId) {
+          if (userCurrentActivity === blastActivity) {
+            setPopUpVisible(true);
+            setPopUpProps({
+              name: findedUserName,
+              image: findedUserImage,
+              title: 'Blast Message',
+              type: 'receive',
+              text: parsedData.blast_msg,
+              action1: confirmBlastMessage,
+              closeAction: hidePopUp,
+            });
+          }
+        } else {
+          hidePopUp();
+          setAlertVisible(true);
+          setAlertProps({
+            type: 'error',
+            title: 'Success',
+            text:
+              'Your blast message was received by each user with choosen activity',
+            closeAction: hideAlert,
+          });
+        }
+      }
     };
   };
 
   const checkFriendship = (user) => {
-    const usersFriends = user.c_user_profile.friends;
+    const usersFriends =
+      user.c_user_profile.friends || JSON.parse(user.c_user_profile).friends;
     const isFriend = usersFriends.some((item) => item.app_user_id === userId);
     const userCurrentActivity = user.c_user_profile.profile_current_act;
     const findedActivity = activities.find(
@@ -117,7 +212,7 @@ const Main = () => {
 
     return isFriend &&
       user.c_user_profile !== null &&
-      user.c_user_profile.profile_img_ava !== null ? (
+      user.c_user_profile.profile_img_ava ? (
       <Image
         style={s.mapPopUpImg}
         source={{
@@ -127,11 +222,134 @@ const Main = () => {
     ) : (
       <Image
         style={s.mapPopUpImg}
-        source={{
-          uri: `${activitiesImagePath}/${findedActivity.activity_img}`,
-        }}
+        source={
+          findedActivity && findedActivity.activity_img
+            ? {
+                uri: `${activitiesImagePath}/${findedActivity.activity_img}`,
+              }
+            : BlastMessageImg
+        }
       />
     );
+  };
+
+  const addBlastMessage = () => {
+    setPopUpVisible(true);
+    setPopUpProps({
+      title: 'Blast Message',
+      type: 'compose',
+      isActionDisabled: true,
+      activities: activities,
+      action1: () => setBlastMessageToggle((prev) => !prev), // toggle because function doesn't see state updates,
+      onContentChange: (text) => setBlastMessageContent(text),
+      onActivityChange: (id) => setBlastMessageActivity(id),
+      closeAction: hidePopUp,
+    });
+  };
+
+  const sendBlastMessage = () => {
+    const timeStamp = +new Date();
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const obj = {
+      blast_msg: blastMessageContent,
+      blast_activities: blastMessageActivity,
+      msg_timestamp_sent: stringedTimeStamp,
+    };
+    const stringedObj = JSON.stringify(obj);
+    if (socket && blastMessageActivity !== '' && blastMessageContent !== 0) {
+      socket.send(stringedObj);
+    }
+    setPopUpProps({});
+    setPopUpVisible(false);
+    setBlastMessageContent('');
+    setBlastMessageActivity('');
+  };
+
+  const confirmBlastMessage = () => {
+    const timeStamp = +new Date();
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const obj = {
+      blast_join: 1,
+      blast_author_user_id: userId,
+      msg_timestamp_sent: stringedTimeStamp,
+    };
+    const stringedObj = JSON.stringify(obj);
+    socket.send(stringedObj);
+
+    hidePopUp();
+    setAlertVisible(true);
+    setAlertProps({
+      type: 'error',
+      title: 'Success',
+      text: 'Your blast invitation was confirmed',
+      closeAction: hideAlert,
+    });
+  };
+
+  const addBlastPin = () => {
+    setBlastPinMode((prev) => !prev);
+    // setAlertVisible(true);
+    // setAlertProps({
+    //   title: 'Submit a blast pin',
+    //   text: 'Set pin, where you want to create the event',
+    //   type: 'choice',
+    //   action2: () => setBlastPinToggle((prev) => !prev),
+    //   closeAction: cancelBlastPin,
+    // });
+  };
+
+  const handleBlastPinCoordinates = (e) => {
+    const coordinates = e.geometry.coordinates;
+    setBlastPinCoordinates(coordinates);
+  };
+
+  const sendBlastPin = () => {
+    const timeStamp = +new Date();
+    const expiringTimeStamp = timeStamp + 10800;
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const stringedExpiringTimeStamp = JSON.stringify(expiringTimeStamp);
+    const stringedBlastPinCoordinates = JSON.stringify(blastPinCoordinates);
+    const obj = {
+      bPin_start: 1,
+      bPin_msg: blastPinContent,
+      bPin_cors: stringedBlastPinCoordinates,
+      bPin_expires_at: stringedExpiringTimeStamp,
+      msg_timestamp_sent: stringedTimeStamp,
+    };
+    const stringedObj = JSON.stringify(obj);
+    console.log('obj', obj);
+    if (socket && blastPinCoordinates.length !== 0) {
+      socket.send(stringedObj);
+      cancelBlastPin();
+    }
+  };
+
+  const confirmBlastPin = (id) => {
+    const timeStamp = +new Date();
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const obj = {
+      bPin_join: 1,
+      bPin_ev_id: id,
+      msg_timestamp_sent: stringedTimeStamp,
+    };
+    const stringedObj = JSON.stringify(obj);
+    socket.send(stringedObj);
+
+    hidePopUp();
+    setAlertVisible(true);
+    setAlertProps({
+      type: 'error',
+      title: 'Success',
+      text: 'Your blast invitation was confirmed',
+      closeAction: hideAlert,
+    });
+  };
+
+  const cancelBlastPin = () => {
+    setBlastPinContent("Let's meet here");
+    setBlastPinMode(false);
+    setBlastPinCoordinates(userLocation);
+    hideAlert();
   };
 
   const hidePopUp = () => {
@@ -139,18 +357,38 @@ const Main = () => {
     setPopUpProps({});
   };
 
+  const hideAlert = () => {
+    setAlertVisible(false);
+    setAlertProps({});
+  };
+
   useEffect(() => {
-    getUserId();
+    getUserData();
     getActivities();
-    getUserLocationPermision();
   }, []);
 
   useEffect(() => {
     connectToSocket();
   }, [userLocation]);
 
+  useEffect(() => {
+    sendBlastMessage();
+  }, [blastMessageToggle]);
+
+  // useEffect(() => {
+  //   sendBlastPin();
+  // }, [blastPinToggle]);
+
+  useEffect(() => {
+    if (blastMessageContent !== '' && blastMessageActivity !== '') {
+      setPopUpProps({...popUpProps, isActionDisabled: false});
+    } else {
+      setPopUpProps({...popUpProps, isActionDisabled: true});
+    }
+  }, [blastMessageContent, blastMessageActivity]);
+
   const renderBurger = (
-    <View style={[s.buttonOuter, {left: 16}]} key="burger">
+    <View style={[s.buttonOuter, {left: 16}]} key={'burger'}>
       <TouchableOpacity
         style={s.button}
         activeOpacity={0.8}
@@ -161,34 +399,62 @@ const Main = () => {
   );
 
   const renderBlastMessageBtn = (
-    <View style={[s.buttonOuter, {right: 16}]} key="blastMessage">
+    <View style={[s.buttonOuter, {right: 16}]} key={'blastMessage'}>
       <TouchableOpacity
         style={s.button}
         activeOpacity={0.8}
-        onPress={() => {
-          setPopUpVisible(true);
-          setPopUpProps({
-            title: 'Blast Message',
-            type: 'compose',
-            action1: hidePopUp,
-            action2: hidePopUp,
-          });
-        }}>
+        onPress={addBlastMessage}>
         <Image style={s.buttonImg} source={BlastMessageImg} />
       </TouchableOpacity>
     </View>
   );
 
   const renderBlastPinBtn = (
-    <View style={[s.buttonOuter, {right: 76}]} key="blastPin">
-      <TouchableOpacity style={s.button} activeOpacity={0.8}>
+    <View style={[s.buttonOuter, {right: 76}]} key={'blastPin'}>
+      <TouchableOpacity
+        style={s.button}
+        activeOpacity={0.8}
+        onPress={addBlastPin}>
         <Image style={s.buttonImg} source={BlastPinImg} />
       </TouchableOpacity>
     </View>
   );
 
+  const renderBlastPin = (
+    <MapboxGL.MarkerView
+      id={'blastPin'}
+      coordinate={
+        blastPinCoordinates.length !== 0 ? blastPinCoordinates : userLocation
+      }>
+      <View style={s.blastPinContainer}>
+        <View style={s.blastPinBox}>
+          <View style={s.wrapper}>
+            <Text style={s.blastPinTitle}>Blast Pin</Text>
+            <TextInput
+              style={s.blastPinInput}
+              value={blastPinContent}
+              onChange={(e) => {
+                e.persist();
+                setBlastPinContent(e.nativeEvent.text);
+              }}
+            />
+            <TouchableOpacity
+              style={s.nextBtn}
+              activeOpacity={0.8}
+              onPress={sendBlastPin}>
+              <Image style={s.nextImg} source={NextImg} />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={s.blastPin}>
+          <Image style={s.blastPinImg} source={LocationImg} />
+        </View>
+      </View>
+    </MapboxGL.MarkerView>
+  );
+
   const renderUsers = usersData.map((user) =>
-    user.my_cur_loc !== null ? (
+    user.my_cur_loc !== null && user.c_user_id !== userId ? (
       <MapboxGL.MarkerView
         key={user.c_user_id}
         id={user.c_user_id}
@@ -251,6 +517,7 @@ const Main = () => {
         compassEnabled={false}
         attributionEnabled={false}
         logoEnabled={false}
+        onPress={(e) => (blastPinMode ? handleBlastPinCoordinates(e) : null)}
         onLongPress={() => setActiveUser(null)}>
         <MapboxGL.Camera zoomLevel={12} followUserLocation />
         <MapboxGL.UserLocation
@@ -260,6 +527,7 @@ const Main = () => {
           }
         />
         {renderUsers}
+        {blastPinMode ? renderBlastPin : null}
       </MapboxGL.MapView>
       {[renderBurger, renderBlastMessageBtn, renderBlastPinBtn]}
       {alertVisible ? <Alert {...alertProps} /> : null}
@@ -277,6 +545,12 @@ const s = StyleSheet.create({
   container: {
     width: '100%',
     height: '100%',
+  },
+  wrapper: {
+    width: '100%',
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   mask: {
     width: '100%',
@@ -395,5 +669,43 @@ const s = StyleSheet.create({
     fontFamily: 'Gilroy-SemiBold',
     fontSize: 18,
     color: '#fff',
+  },
+  blastPinContainer: {
+    width: 200,
+    height: 320,
+    backgroundColor: 'transparent',
+    justifyContent: 'flex-start',
+  },
+  blastPinBox: {
+    maxWidth: 200,
+    backgroundColor: '#141F25',
+    paddingVertical: 5,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+  },
+  blastPinTitle: {
+    textAlign: 'center',
+    fontFamily: 'Atma-SemiBold',
+    fontSize: 20,
+    color: '#fff',
+  },
+  blastPinInput: {
+    height: 50,
+    textAlign: 'center',
+    backgroundColor: 'transparent',
+    fontFamily: 'Gilroy-SemiBold',
+    fontSize: 16,
+    color: '#F0FCFF',
+  },
+  blastPin: {
+    width: 50,
+    height: 50,
+    left: '50%',
+    transform: [{translateX: -25}],
+  },
+  blastPinImg: {
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
   },
 });

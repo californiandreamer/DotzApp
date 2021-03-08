@@ -33,31 +33,14 @@ import {getAccessToken} from '../../hooks/useAccessToken';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
-const Bar = ({
-  id,
-  title,
-  activity,
-  start,
-  finish,
-  coordinates,
-  rating,
-  records,
-  testAction,
-}) => {
-  const generatedId = generateRandomId();
-  const innerHeight = Dimensions.get('window').height;
-  const pan = useRef(new Animated.ValueXY({x: 0, y: 0}));
-  // const defaultTopVal = innerHeight * 0.66;
-  // const layout = pan.current.getLayout();
-
+const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
   const [barStatusProps, setBarStatusProps] = useState({
     title,
     image: activity.activity_img,
     imageType: 'link',
   });
-  const [timerProps, setTimerProps] = useState({speed: 0});
+  const [timerProps, setTimerProps] = useState({speed: 0, average: 0});
   const [alertProps, setAlertProps] = useState({});
-  const [barShowed, setBarShowed] = useState(true);
   const [postInputValue, setPostInputValue] = useState('No description');
   const [isRouteStarted, setIsRouteStarted] = useState(false);
   const [isPublishingMode, setIsPublishingMode] = useState(false);
@@ -66,8 +49,16 @@ const Bar = ({
   const [saveButtonText, setSaveButtonText] = useState('Save');
   const [socket, setSocket] = useState(null);
 
-  // const [defaultPan, setDefaultPan] = useState(layout.top._value);
-  // const [defaultOffset, setDefaultOffset] = useState(pan.current.x._offset);
+  const calculateAverageSpeed = () => {
+    const arr = [1, 5, 7, 4, 7, 3, 7, 2, 8, 29];
+    const reduced = arr.reduce((a, b) => a + b, 0);
+    const length = arr.length;
+    const average = reduced / length;
+    console.log('average', average);
+  };
+  useEffect(() => {
+    calculateAverageSpeed();
+  }, []);
 
   const renderRater = (
     <Rater
@@ -143,6 +134,10 @@ const Bar = ({
   };
 
   const finishRoute = () => {
+    if (!barShowed) {
+      showBar();
+    }
+    connectToSocket();
     setIsPublishingMode(true);
   };
 
@@ -150,10 +145,10 @@ const Bar = ({
     const timeStamp = +new Date();
     const stringedTimeStamp = JSON.stringify(timeStamp);
     const obj = {
-      pp_content: `${postInputValue}\n My last time on ${title}: 12:32s`,
+      pp_content: `${postInputValue}\nMy last time on ${title}: 12:32s`,
       msg_timestamp_sent: stringedTimeStamp,
       post_action: 'addPost',
-      type: 'post',
+      type: 'record',
     };
     socket.send(JSON.stringify(obj));
     setAlertProps({
@@ -172,8 +167,8 @@ const Bar = ({
       title: postDeleteContent.title,
       text: postDeleteContent.text,
       type: 'choice',
-      action1: hideAlert,
-      action2: clearPostData,
+      action1: clearPostData,
+      closeAction: hideAlert,
     });
   };
 
@@ -274,9 +269,13 @@ const Bar = ({
       parsedProfileData.profile_favourite_locs = stringedFavoriteLocations;
 
       postData.append('favourite_locs', stringedFavoriteLocations);
-
       await axiosPost(updateFavoritesPath, postData, headers);
     } else {
+      setBarStatusProps({
+        title: 'Location saved',
+        image: SuccessImg,
+        imageType: 'image',
+      });
       let initialFavoriteLocations = [];
       addItemToArray(initialFavoriteLocations, id);
       parsedProfileData.profile_favourite_locs = initialFavoriteLocations;
@@ -294,11 +293,13 @@ const Bar = ({
   };
 
   const addItemToArray = (arr, item) => {
+    console.log('adding');
     arr.push(item);
     return arr;
   };
 
   const removeItemFromArray = (arr, item) => {
+    console.log('removing');
     const index = arr.indexOf(item);
     if (index > -1) {
       arr.splice(index, 1);
@@ -307,6 +308,7 @@ const Bar = ({
   };
 
   const checkItemExistsInArray = (arr, item) => {
+    console.log('checking');
     const res = arr.includes(item);
     return res;
   };
@@ -318,13 +320,104 @@ const Bar = ({
   };
 
   useEffect(() => {
-    connectToSocket();
     checkIsLocationSaved();
   }, []);
 
   useEffect(() => {
     setActiveElement(renderBarStatus);
   }, [barStatusProps]);
+
+  useEffect(() => {
+    setActiveElement(renderBarStatus);
+    setBarStatusProps({title, image: activity.activity_img, imageType: 'link'});
+  }, [title, activity]);
+
+  // PanResponder animation
+  const maxVal = innerHeight - 80;
+  const innerHeight = Dimensions.get('window').height;
+
+  const [animation] = useState(
+    new Animated.ValueXY({x: 0, y: innerHeight - 350}),
+  );
+  const [barShowed, setBarShowed] = useState(false);
+  const [offset, setOffset] = useState(innerHeight - 350);
+
+  const handlePanResponderMove = (e, gestureState) => {
+    const newVal =
+      offset + gestureState.dy > maxVal
+        ? maxVal
+        : offset + gestureState.dy < 0
+        ? 0
+        : offset + gestureState.dy;
+    animation.setValue({x: 0, y: newVal});
+  };
+
+  const handlePanResponderRelease = (e, gestureState) => {
+    const newVal =
+      offset + gestureState.dy > maxVal
+        ? maxVal
+        : offset + gestureState.dy < 0
+        ? 0
+        : offset + gestureState.dy;
+    setOffset(newVal);
+    if (newVal > 150) {
+      hideBar();
+    } else if (newVal < 150) {
+      showBar();
+    }
+    if (newVal > innerHeight - 100) {
+      hideBarAction();
+    }
+  };
+
+  const animatedStyle = {
+    transform: [...animation.getTranslateTransform()],
+  };
+
+  const _panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
+    onMoveShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+    onPanResponderGrant: () => console.log('granted'),
+    onPanResponderMove: (evt, gestureState) =>
+      handlePanResponderMove(evt, gestureState),
+    onPanResponderRelease: (e, g) => handlePanResponderRelease(e, g),
+  });
+
+  const panHandlers = _panResponder.panHandlers;
+
+  const showBar = () => {
+    Animated.spring(animation, {
+      toValue: {
+        x: 0,
+        y: 0,
+      },
+      useNativeDriver: true,
+    }).start(() => {
+      setOffset(0);
+    });
+    setBarShowed(true);
+  };
+
+  const hideBar = () => {
+    Animated.spring(animation, {
+      toValue: {
+        x: 0,
+        y: innerHeight - 350,
+      },
+      useNativeDriver: true,
+    }).start(() => {
+      setOffset(innerHeight - 350);
+    });
+    setBarShowed(false);
+  };
+
+  const renderResponder = (
+    <View style={s.responder} {...panHandlers}>
+      <Image style={s.responderImg} source={ResponderImg} />
+    </View>
+  );
 
   const renderAlert = alertProps.isVisible ? <Alert {...alertProps} /> : null;
 
@@ -339,21 +432,6 @@ const Bar = ({
       }}
     />
   ) : null;
-
-  const renderResponder = (
-    <TouchableOpacity
-      style={s.responder}
-      activeOpacity={0.8}
-      onPress={testAction}>
-      <Image style={s.responderImg} source={ResponderImg} />
-    </TouchableOpacity>
-    // <View
-    //   style={s.responder}
-    //   // {...panResponder.panHandlers}
-    // >
-    //   <Image style={s.responderImg} source={ResponderImg} />
-    // </View>
-  );
 
   const renderButtonsRow = (
     <View style={s.wrapper}>
@@ -483,11 +561,7 @@ const Bar = ({
   );
 
   return (
-    <Animated.View
-      style={[
-        s.container,
-        {transform: [{translateY: pan.current.getLayout().top}]},
-      ]}>
+    <Animated.View style={[s.container, animatedStyle]}>
       <View style={s.inner}>
         {renderResponder}
         {renderAlert}
@@ -505,106 +579,8 @@ const Bar = ({
 
 export default Bar;
 
-// <Animated.View style={[s.container, {top: pan.current.getLayout().top}]}>
-
 {
   /* <View style={s.wrapper}>
             <Text style={s.text}>Your time: 24 min, speed 52 mi/h</Text>
           </View> */
 }
-
-{
-  /* <Text style={{color: '#fff', fontSize: 20}}>Pan: {defaultPan}</Text>
-          <Text style={{color: '#fff', fontSize: 20}}>
-            Offset: {defaultOffset}
-          </Text> */
-}
-
-// const onMove = (e) => {
-//   setDefaultPan(layout.top._value);
-//   setDefaultOffset(pan.current.x._offset);
-//   // if (layout.top._value < -200) {
-//   //   Animated.spring(pan.current, {
-//   //     toValue: {
-//   //       x: 0 - pan.current.x._offset,
-//   //       y: -400,
-//   //     },
-//   //     useNativeDriver: false,
-//   //   }).start(() => {
-//   //     // pan.current.setValue({x: 0, y: 0});
-//   //     pan.current.setOffset({x: 0, y: 0});
-//   //   });
-//   //   pan.current.setValue({x: 0, y: -400});
-//   //   console.log(layout);
-//   // }
-// };
-
-// const panResponder = useMemo(
-//   () =>
-//     PanResponder.create({
-//       onStartShouldSetPanResponder: () => true,
-//       onMoveShouldSetPanResponderCapture: () => true,
-
-//       onPanResponderGrant: (evt, gestureState) => {
-//         pan.current.setOffset({
-//           x: pan.current.x._value,
-//           y: pan.current.y._value,
-//         });
-//         pan.current.setValue({x: 0, y: 0});
-//       },
-
-//       onPanResponderMove: Animated.event(
-//         [
-//           null,
-//           {
-//             dx: pan.current.x,
-//             dy: pan.current.y,
-//           },
-//         ],
-//         {
-//           listener: onMove,
-//           useNativeDriver: false,
-//         },
-//       ),
-//       onPanResponderRelease: (e, gesture) => {
-//         if (barShowed) {
-//           console.log('Im here');
-//           hideBar();
-//         } else {
-//           console.log('Im there');
-//           showBar();
-//         }
-//       },
-//     }),
-//   [],
-// );
-
-// const showBar = () => {
-//   Animated.spring(pan.current, {
-//     toValue: {
-//       x: 0 - pan.current.x._offset,
-//       y: 0,
-//     },
-//     useNativeDriver: true,
-//   }).start(() => {
-//     //   pan.current.setValue({x: 0, y: 0});
-//     //   pan.current.setOffset({x: 0, y: 0});
-//   });
-//   setBarShowed(true);
-// };
-
-// const hideBar = () => {
-//   console.log('pan.current', pan.current);
-//   Animated.spring(pan.current, {
-//     toValue: {
-//       x: 0 - pan.current.x._offset,
-//       y: 400,
-//       // y: 0 - pan.current.y._offset,
-//     },
-//     useNativeDriver: true,
-//   }).start(() => {
-//     // pan.current.setValue({x: 0, y: 0});
-//     // pan.current.setOffset({x: 0, y: 0});
-//   });
-//   setBarShowed(false);
-// };

@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 import {useNavigation} from '@react-navigation/native';
+import {profileImageUrl} from '../../api/api';
 
 const ChatList = ({list, refreshing, onRefresh}) => {
   const navigation = useNavigation();
+  console.log('list', list);
 
   const stackNavigate = (route, params) => {
     navigation.navigate(route, params);
@@ -36,7 +38,13 @@ const ChatList = ({list, refreshing, onRefresh}) => {
             })
           }>
           <View style={s.wrapper}>
-            <Image style={s.image} source={AvatarPlaceholderImg} />
+            <Image
+              style={s.image}
+              source={
+                // {uri: `${profileImageUrl}${item.profile.profile_img_ava}`} ||
+                AvatarPlaceholderImg
+              }
+            />
             <View style={s.content}>
               <Text style={s.name}>{item.author_name}</Text>
               <Text style={s.text} numberOfLines={1}>

@@ -13,6 +13,7 @@ const Messages = () => {
   let initialChatList = [];
 
   const [chatList, setChatList] = useState([]);
+  // console.log('chatList', chatList);
   const [refreshing, setRefreshing] = useState(false);
 
   const getChatHistory = async () => {
@@ -23,17 +24,23 @@ const Messages = () => {
     const parsedProfile = JSON.parse(profile);
     const userId = parsedProfile.app_user_id;
 
-    const chatHistory = await axiosGet(chatHistoryPath, headers);
+    const history = await axiosGet(chatHistoryPath, headers);
+    const chatHistory = history[0];
+    const usersHistory = history[1];
     const reversedChatHistory = chatHistory.reverse();
 
     for (let i = 0; i < reversedChatHistory.length; i++) {
       const chatItem = reversedChatHistory[i];
       const senderId = chatItem.author_id;
+      const findedUser = usersHistory.find(
+        (item) => item.app_user_id === senderId,
+      );
       const senderExists = initialChatList.some(
         (item) => item.author_id === senderId,
       );
       if (!senderExists && senderId !== userId) {
-        initialChatList.push(chatItem);
+        const chatItemWithProfile = {...chatItem, ...findedUser};
+        initialChatList.push(chatItemWithProfile);
       }
     }
 
@@ -42,26 +49,30 @@ const Messages = () => {
     setRefreshing(false);
   };
 
-  const placeNewMessage = (data) => {
-    setChatList([]);
-    console.log('data', data);
-    const senderId = data.author_id;
-    const index = initialChatList.map((x) => x.author_id).indexOf(senderId);
-    initialChatList[index] = data;
-    setChatList(initialChatList);
-  };
-
-  const connectToSocket = (token) => {
+  const connectToSocket = async (token) => {
     const conn = new WebSocket(`${socketUrl}${token}`);
+    const headers = await getHeadersWithToken();
+    const history = await axiosGet(chatHistoryPath, headers);
+    const usersHistory = history[1];
 
     conn.onmessage = (e) => {
       const data = e.data;
       const parsedData = JSON.parse(data);
 
       if (parsedData.hasOwnProperty('message')) {
-        placeNewMessage(parsedData);
+        placeNewMessage(parsedData, usersHistory);
       }
     };
+  };
+
+  const placeNewMessage = (data, history) => {
+    setChatList([]);
+    const senderId = data.author_id;
+    const findedUser = history.find((item) => item.app_user_id === senderId);
+    const chatItemWithProfile = {...data, ...findedUser};
+    const index = initialChatList.map((x) => x.author_id).indexOf(senderId);
+    initialChatList[index] = chatItemWithProfile;
+    setChatList(initialChatList);
   };
 
   useEffect(() => {

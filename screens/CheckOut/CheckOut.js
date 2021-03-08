@@ -4,9 +4,15 @@ import Button from '../../misc/Button/Button';
 import Header from '../../misc/Header/Header';
 import BarStatus from '../../misc/BarStatus/BarStatus';
 import LeaderboardComponent from '../../misc/Leaderboard/Leaderboard';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 
 const CheckOut = ({route}) => {
   const data = {...route.params};
+
+  const navigation = useNavigation();
+  const stackPush = (route, params) => {
+    navigation.push(route, params);
+  };
 
   return (
     <ScrollView style={s.container}>
@@ -15,7 +21,11 @@ const CheckOut = ({route}) => {
         <BarStatus title={data.title} image={data.image} imageType={'link'} />
       </View>
       <View style={s.wrapper}>
-        <Button text={'Go to location'} style={'orange'} />
+        <Button
+          text={'Go to location'}
+          style={'orange'}
+          action={() => stackPush('Locations', {...data})}
+        />
         <LeaderboardComponent />
       </View>
     </ScrollView>

@@ -10,31 +10,30 @@ import {
   Dimensions,
 } from 'react-native';
 import * as turf from '@turf/turf';
-// import * as turf from '@turf/helpers'; // need to remove ?
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {useNavigation, DrawerActions} from '@react-navigation/native';
 import {defaultLocation} from '../../data';
 import {activitiesImageUrl, mapBoxToken} from '../../api/api';
 import {addLocationPath, locationsPath} from '../../api/routes';
-import {getHeadersWithAccessToken} from '../../hooks/useAccessToken';
-import {axiosGet, axiosPost} from '../../hooks/useAxios';
-import {generateRandomId} from '../../hooks/useIdGenerator';
 import {getItem} from '../../hooks/useAsyncStorage';
+import {axiosGet, axiosPost} from '../../hooks/useAxios';
 import {getHeadersWithToken} from '../../hooks/useApiData';
-import BurgerImg from '../../assets/icons/ic-menu.png';
+import {generateRandomId} from '../../hooks/useIdGenerator';
+import {getHeadersWithAccessToken} from '../../hooks/useAccessToken';
 import PlusImg from '../../assets/icons/ic-plus.png';
 import RouteImg from '../../assets/icons/ic-plus1.png';
+import BurgerImg from '../../assets/icons/ic-menu.png';
 import CompassImg from '../../assets/icons/ic-plus2.png';
+import NextImg from '../../assets/icons/icon-siguiente.png';
 import BlastPinImg from '../../assets/icons/ic-blast-pin.png';
 import BlastMessageImg from '../../assets/icons/ic-message.png';
-import NextImg from '../../assets/icons/icon-siguiente.png';
-import Alert from '../../misc/Alert/Alert';
 import Bar from '../../misc/Bar/Bar';
+import Alert from '../../misc/Alert/Alert';
 import PopUp from '../../misc/PopUp/PopUp';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
-const Locations = () => {
+const Locations = ({route}) => {
   const navigation = useNavigation();
 
   const [locationsData, setLocationsData] = useState([]);
@@ -45,11 +44,11 @@ const Locations = () => {
   const [popUpVisible, setPopUpVisible] = useState(false);
   const [popUpProps, setPopUpProps] = useState({});
   const [alertProps, setAlertProps] = useState({});
-  const [isLocPermitionGranted, setIsLocPermitionGranted] = useState(false);
 
   const [routeToggle, setRouteToggle] = useState(false);
   const [placeToggle, setPlaceToggle] = useState(false);
   const [activeLocation, setActiveLocation] = useState(null);
+  const [cameraCentering, setCameraCentering] = useState([]);
   const [userStartLocation, setUserStartLocation] = useState(defaultLocation);
   const [alertCityValue, setAlertCityValue] = useState('No city');
   const [alertInputValue, setAlertInputValue] = useState('No name');
@@ -58,10 +57,10 @@ const Locations = () => {
   const [drawedRouteCoordinates, setDrawedRouteCoordinates] = useState([]);
   const [drawedPlaceCoordinates, setDrawedPlaceCoordinates] = useState([]);
 
+  const rotatingVal = useRef(new Animated.Value(0)).current;
   const routeBtnVal = useRef(new Animated.Value(30)).current;
   const placeBtnVal = useRef(new Animated.Value(30)).current;
   const textOpacityVal = useRef(new Animated.Value(0)).current;
-  const rotatingVal = useRef(new Animated.Value(0)).current;
 
   const spin = rotatingVal.interpolate({
     inputRange: [0, 1],
@@ -119,10 +118,12 @@ const Locations = () => {
     }).start();
   };
 
-  const getUserLocationPermision = async () => {
-    if (Platform.OS === 'android') {
-      const isGranted = await MapboxGL.requestAndroidLocationPermissions();
-      setIsLocPermitionGranted(isGranted);
+  const checkRoute = () => {
+    if (route.params) {
+      const parsedCoordinates = JSON.parse(route.params.coordinates);
+      const startCoordinates = parsedCoordinates[0];
+      setActiveLocation(route.params.id);
+      setCameraCentering(startCoordinates);
     }
   };
 
@@ -141,6 +142,7 @@ const Locations = () => {
   };
 
   const hideBar = () => {
+    setActiveLocation(null);
     setBarVisible(false);
     setBarProps({});
   };
@@ -191,6 +193,7 @@ const Locations = () => {
     const profileData = await getItem('profile');
     const parsedProfileData = JSON.parse(profileData);
     const currentActivity = parsedProfileData.profile_current_act;
+    console.log('test');
 
     let routes;
     let start;
@@ -254,8 +257,8 @@ const Locations = () => {
           ? 'Draw a Route from Start to Finish'
           : 'Drop a Pin on a Place you want to submit',
       type: 'choice',
-      action1: () => cancelAdding(),
-      action2: () =>
+      closeAction: () => cancelAdding(),
+      action1: () =>
         type === 'route'
           ? setRouteToggle((prev) => !prev)
           : setPlaceToggle((prev) => !prev), // toggle because function doesn't see state updates
@@ -264,8 +267,8 @@ const Locations = () => {
   };
 
   useEffect(() => {
+    checkRoute();
     getLocations();
-    getUserLocationPermision();
   }, []);
 
   useEffect(() => {
@@ -273,11 +276,12 @@ const Locations = () => {
   }, [routeToggle]);
 
   useEffect(() => {
+    console.log('test2');
     addLocaitonRequest('place');
   }, [placeToggle]);
 
   const renderBurger = (
-    <View style={[s.buttonOuter, {left: 16}]} key="burger">
+    <View style={[s.buttonOuter, {left: 16}]} key={'burger'}>
       <TouchableOpacity
         style={s.button}
         activeOpacity={0.8}
@@ -287,33 +291,32 @@ const Locations = () => {
     </View>
   );
 
-  const renderBlastMessageBtn = (
-    <View style={[s.buttonOuter, {right: 16}]} key="blastMessage">
-      <TouchableOpacity
-        style={s.button}
-        activeOpacity={0.8}
-        onPress={() => {
-          setPopUpVisible(true);
-          setPopUpProps({
-            title: 'Blast Message',
-            type: 'compose',
-            action1: hidePopUp,
-            action2: hidePopUp,
-          });
-          addLocaitonRequest(drawedRouteCoordinates);
-        }}>
-        <Image style={s.buttonImg} source={BlastMessageImg} />
-      </TouchableOpacity>
-    </View>
-  );
+  // const renderBlastMessageBtn = (
+  //   <View style={[s.buttonOuter, {right: 16}]} key={'blastMessage'}>
+  //     <TouchableOpacity
+  //       style={s.button}
+  //       activeOpacity={0.8}
+  //       onPress={() => {
+  //         setPopUpVisible(true);
+  //         setPopUpProps({
+  //           title: 'Blast Message',
+  //           type: 'compose',
+  //           action1: hidePopUp,
+  //           action2: hidePopUp,
+  //         });
+  //       }}>
+  //       <Image style={s.buttonImg} source={BlastMessageImg} />
+  //     </TouchableOpacity>
+  //   </View>
+  // );
 
-  const renderBlastPinBtn = (
-    <View style={[s.buttonOuter, {right: 76}]} key="blastPin">
-      <TouchableOpacity style={s.button} activeOpacity={0.8}>
-        <Image style={s.buttonImg} source={BlastPinImg} />
-      </TouchableOpacity>
-    </View>
-  );
+  // const renderBlastPinBtn = (
+  //   <View style={[s.buttonOuter, {right: 76}]} key={'blastPin'}>
+  //     <TouchableOpacity style={s.button} activeOpacity={0.8}>
+  //       <Image style={s.buttonImg} source={BlastPinImg} />
+  //     </TouchableOpacity>
+  //   </View>
+  // );
 
   const renderOptions = (
     <View>
@@ -459,7 +462,11 @@ const Locations = () => {
             ? drawPlace(e)
             : null
         }>
-        <MapboxGL.Camera zoomLevel={12} followUserLocation />
+        <MapboxGL.Camera
+          zoomLevel={12}
+          centerCoordinate={cameraCentering.length !== 0 ? cameraCentering : []}
+          followUserLocation={cameraCentering.length !== 0 ? false : true}
+        />
         <MapboxGL.UserLocation
           minDisplacement={10000}
           onUpdate={(e) => handleUserLocation(e)}
@@ -471,14 +478,12 @@ const Locations = () => {
           : null}
         {renderLocations}
       </MapboxGL.MapView>
-      {[renderBurger, renderBlastMessageBtn, renderBlastPinBtn]}
+      {!route.params ? renderBurger : null}
       {openOptions ? <View style={s.mask} /> : null}
       {renderOptions}
       {alertVisible ? <Alert {...alertProps} /> : null}
-      {popUpVisible ? (
-        <PopUp {...popUpProps} action1={addLocaitonRequest} />
-      ) : null}
-      {barVisible ? <Bar {...barProps} testAction={hideBar} /> : null}
+      {popUpVisible ? <PopUp {...popUpProps} /> : null}
+      {barVisible ? <Bar {...barProps} hideBarAction={hideBar} /> : null}
     </View>
   );
 };

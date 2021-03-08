@@ -18,15 +18,16 @@ import {getItem} from '../../hooks/useAsyncStorage';
 import {axiosGet} from '../../hooks/useAxios';
 import {socketUrl} from '../../api/api';
 import {getHeadersWithToken} from '../../hooks/useApiData';
+import {chatHistoryPath} from '../../api/routes';
 
 const Dialog = ({route}) => {
   const [userId, setUserId] = useState([]);
   const [socket, setSocket] = useState(null);
   const [messageValue, setMessageValue] = useState('');
   const [messagesList, setMessagesList] = useState([]);
+  console.log('messagesList', messagesList);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  const chatHistoryPath = 'chat/getChatHistory';
   const scrollRef = useRef(null);
   const rotateValue = useRef(new Animated.Value(0)).current;
   const spin = rotateValue.interpolate({
@@ -54,12 +55,17 @@ const Dialog = ({route}) => {
     const profileUserId = parsedProfile.app_user_id;
     setUserId(profileUserId);
 
-    const chatHistory = await axiosGet(chatHistoryPath, headers);
+    const history = await axiosGet(chatHistoryPath, headers);
+    const chatHistory = history[0];
+    const usersHistory = history[1];
 
     for (let i = 0; i < chatHistory.length; i++) {
       const chatItem = chatHistory[i];
       const senderId = chatItem.author_id;
       const receiverId = chatItem.msg_reciever_id;
+      const timeSent = chatItem.msg_time_sent;
+      const slicedTime = timeSent.split(' ');
+      console.log('slicedTime', slicedTime[1]);
 
       if (senderId === interlocutorId || receiverId === interlocutorId) {
         initialMessagesList.push(chatItem);
@@ -78,8 +84,9 @@ const Dialog = ({route}) => {
       const data = e.data;
       const parsedData = JSON.parse(data);
       if (parsedData.hasOwnProperty('message')) {
+        setMessagesList([]);
         initialMessagesList.push(parsedData);
-        setMessagesList(initialMessagesList);
+        setMessagesList([...initialMessagesList]);
       }
     };
   };
@@ -202,6 +209,15 @@ const Dialog = ({route}) => {
                 key={message.msg_id || message.msg_timestamp_sent}>
                 <View style={s.inner}>
                   <Text style={s.text}>{message.message}</Text>
+                  <Text
+                    style={[
+                      s.item,
+                      message.author_id === userId
+                        ? s.userTime
+                        : s.interlocutorTime,
+                    ]}>
+                    {message.msg_time_sent.split(' ')[1]}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -252,6 +268,20 @@ const s = StyleSheet.create({
   },
   user: {
     alignItems: 'flex-end',
+  },
+  userTime: {
+    fontSize: 12,
+    color: '#999',
+    position: 'absolute',
+    left: -70,
+    top: '50%',
+  },
+  interlocutorTime: {
+    fontSize: 12,
+    color: '#999',
+    position: 'absolute',
+    right: -230,
+    top: '50%',
   },
   inputArea: {
     height: 50,

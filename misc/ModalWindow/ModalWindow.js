@@ -23,10 +23,14 @@ const ModalWindow = ({title, buttonText, cancelText, action, cancelAction}) => {
           <Text style={s.title}>{title}</Text>
           <TouchableOpacity
             style={[s.button, customButtonStyle]}
-            activeOpacity={0.8}>
+            activeOpacity={0.8}
+            onPress={action}>
             <Text style={[s.text, customButtonTextStyle]}>{buttonText}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.button} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={s.button}
+            activeOpacity={0.8}
+            onPress={cancelAction}>
             <Text style={s.text}>{cancelText}</Text>
           </TouchableOpacity>
         </ImageBackground>

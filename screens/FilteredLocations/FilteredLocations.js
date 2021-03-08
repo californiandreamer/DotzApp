@@ -6,7 +6,7 @@ import {axiosGet} from '../../hooks/useAxios';
 import Header from '../../misc/Header/Header';
 import HeadLine from '../../misc/HeadLine/HeadLine';
 import LocationsList from '../../misc/LocationsList/LocationsList';
-import {errorsContent} from '../../data';
+import {errorsContent, swipeToUpdateContent} from '../../data';
 
 const FilteredLocations = ({route}) => {
   const path = '/locations';
@@ -15,7 +15,6 @@ const FilteredLocations = ({route}) => {
   const [subtitle, setSubtitle] = useState('');
 
   const checkRoureParams = () => {
-    console.log('log');
     if (route.params !== undefined) {
       filterLocations();
     } else {
@@ -29,7 +28,6 @@ const FilteredLocations = ({route}) => {
     const value = route.params.filterValue;
 
     const filteredData = data.filter((item) => item.loc_city === value);
-    console.log('filteredData', filteredData);
     setLocations(filteredData);
   };
 
@@ -39,6 +37,7 @@ const FilteredLocations = ({route}) => {
     const favoriteLocations = parsedProfileData.profile_favourite_locs;
     if (favoriteLocations !== null) {
       returnLocations(favoriteLocations);
+      setSubtitle(`${swipeToUpdateContent.text} saved locations`);
     } else {
       setSubtitle(errorsContent.noLocations.title);
     }

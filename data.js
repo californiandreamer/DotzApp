@@ -6,6 +6,18 @@ export const privacyBubbleData = {
   dismentions: 'miles',
 };
 
+export const cities = [
+  'Los Angeles',
+  'New York',
+  'Warsaw',
+  'Moscow',
+  'Minsk',
+  'Barcelona',
+  'Paris',
+  'Berlin',
+  'London',
+];
+
 export const activities = [
   {
     id: 1,
@@ -141,4 +153,13 @@ export const postDeleteContent = {
 export const profileUpdatedContent = {
   title: 'Profile updated',
   text: 'Your profile data was successfully updated',
+};
+
+export const swipeToUpdateContent = {
+  title: 'Tip',
+  text: 'Swipe down to update',
+};
+
+export const geoLocationDisabledContent = {
+  title: 'Please enable geo location services',
 };

@@ -17,7 +17,7 @@ const Friends = () => {
   const [friendsList, setFriendsList] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [friendsRequestsList, setFriendsRequestsList] = useState([]);
-  console.log('friendsRequestsList', friendsRequestsList);
+  // console.log('friendsRequestsList', friendsRequestsList);
   const [socket, setSocket] = useState(null);
 
   const navigation = useNavigation();
@@ -58,15 +58,22 @@ const Friends = () => {
     const profile = await getItem('profile');
     const parsedProfile = JSON.parse(profile);
     const profileFriendsList = parsedProfile.friends;
+    const userId = parsedProfile.app_user_id;
 
     const headers = await getHeadersWithToken();
-
-    const chatHistory = await axiosGet(chatHistoryPath, headers);
+    const history = await axiosGet(chatHistoryPath, headers);
+    const chatHistory = history[0];
+    // const usersHistory = history[1];
     const reversedChatHistory = chatHistory.reverse();
+    // console.log('chatHistory', chatHistory);
+    // console.log('usersHistory', usersHistory);
 
     for (let i = 0; i < reversedChatHistory.length; i++) {
       const chatItem = reversedChatHistory[i];
       const senderId = chatItem.author_id;
+      // const findedUser = usersHistory.find(
+      //   (item) => item.app_user_id === senderId,
+      // );
       const senderExists = initialFriendsRequestsList.some(
         (item) => item.author_id === senderId,
       );
@@ -74,13 +81,30 @@ const Friends = () => {
         (item) => item.app_user_id === senderId,
       );
       const isFriendsRequest = chatItem.request_status === 'requested';
+      // console.log('log', isFriendsRequest, !senderExists, !isFirendApproved);
 
-      if (isFriendsRequest && !senderExists && !isFirendApproved) {
+      if (
+        isFriendsRequest &&
+        !senderExists &&
+        !isFirendApproved &&
+        userId !== senderId
+      ) {
+        // console.log('logging');
+        // console.log('findedUser', findedUser);
+        // const userInfo = {
+        //   app_user_id: findedUser.app_user_id,
+        //   app_user_name: findedUser.app_user_name,
+        //   activities: findedUser.profile.activities,
+        //   profile: findedUser.profile,
+        // };
+        // console.log('userInfo', userInfo);
+        // const chatItemWithProfile = {...chatItem, ...userInfo};
+        // console.log('chatItemWithProfile', chatItemWithProfile);
         initialFriendsRequestsList.push(chatItem);
       }
     }
 
-    setFriendsRequestsList(initialFriendsRequestsList);
+    setFriendsRequestsList([...initialFriendsRequestsList]);
     setRefreshing(false);
   };
 
