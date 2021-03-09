@@ -7,7 +7,6 @@ import {
   Text,
   View,
   Keyboard,
-  FlatList,
   RefreshControl,
 } from 'react-native';
 import {TextInput, TouchableOpacity} from 'react-native-gesture-handler';
@@ -25,7 +24,6 @@ const Dialog = ({route}) => {
   const [socket, setSocket] = useState(null);
   const [messageValue, setMessageValue] = useState('');
   const [messagesList, setMessagesList] = useState([]);
-  console.log('messagesList', messagesList);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
   const scrollRef = useRef(null);
@@ -65,7 +63,6 @@ const Dialog = ({route}) => {
       const receiverId = chatItem.msg_reciever_id;
       const timeSent = chatItem.msg_time_sent;
       const slicedTime = timeSent.split(' ');
-      console.log('slicedTime', slicedTime[1]);
 
       if (senderId === interlocutorId || receiverId === interlocutorId) {
         initialMessagesList.push(chatItem);
@@ -93,6 +90,7 @@ const Dialog = ({route}) => {
 
   const sendMessage = async () => {
     const timeStamp = +new Date();
+    const formatedTimeStamp = timeStamp / 1000;
     const stringedTimeStamp = JSON.stringify(timeStamp);
     const date = new Date().toISOString();
 

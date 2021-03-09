@@ -127,6 +127,7 @@ const Profile = ({route}) => {
   };
 
   const sendFriendshipRequest = async () => {
+    console.log('sendingFriendship');
     setIsButtonDisabled(true);
     const timeStamp = +new Date();
     const stringedTimeStamp = JSON.stringify(timeStamp);
@@ -136,6 +137,7 @@ const Profile = ({route}) => {
       msg_timestamp_sent: stringedTimeStamp,
       friendship_request: 'requested',
     };
+    console.log('obj', obj);
 
     socket.send(JSON.stringify(obj));
   };

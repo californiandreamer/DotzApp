@@ -1,7 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import s from './BarStatus.s';
 import {View, Text, Image, Animated} from 'react-native';
-import BikeActivityImg from '../../assets/icons/ic-bike-riding.png';
 import {activitiesImageUrl} from '../../api/api';
 
 const BarStatus = ({title, image, imageType}) => {

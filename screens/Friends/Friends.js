@@ -1,16 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import {ImageBackground, StyleSheet, Text, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {socketUrl} from '../../api/api';
+import {addToFriendsPath, chatHistoryPath} from '../../api/routes';
+import {getItem} from '../../hooks/useAsyncStorage';
+import {axiosGet, axiosPost} from '../../hooks/useAxios';
+import {getAccessToken} from '../../hooks/useAccessToken';
+import {getHeadersWithToken} from '../../hooks/useApiData';
 import Header from '../../misc/Header/Header';
+import FriendsList from '../../misc/FriendsList/FriendsList';
 import OrangeGradientImg from '../../assets/images/gradient.jpg';
 import NewFriendImg from '../../assets/icons/ic-new-friend.png';
-import FriendsList from '../../misc/FriendsList/FriendsList';
-import {getAccessToken} from '../../hooks/useAccessToken';
-import {socketUrl} from '../../api/api';
-import {axiosGet, axiosPost} from '../../hooks/useAxios';
-import {getItem} from '../../hooks/useAsyncStorage';
-import {useNavigation} from '@react-navigation/native';
-import {getHeadersWithToken} from '../../hooks/useApiData';
-import {addToFriendsPath, chatHistoryPath} from '../../api/routes';
 
 const Friends = () => {
   const [listType, setListType] = useState('Friends');
@@ -63,17 +63,15 @@ const Friends = () => {
     const headers = await getHeadersWithToken();
     const history = await axiosGet(chatHistoryPath, headers);
     const chatHistory = history[0];
-    // const usersHistory = history[1];
+    const usersHistory = history[1];
     const reversedChatHistory = chatHistory.reverse();
-    // console.log('chatHistory', chatHistory);
-    // console.log('usersHistory', usersHistory);
 
     for (let i = 0; i < reversedChatHistory.length; i++) {
       const chatItem = reversedChatHistory[i];
       const senderId = chatItem.author_id;
-      // const findedUser = usersHistory.find(
-      //   (item) => item.app_user_id === senderId,
-      // );
+      const findedUser = usersHistory.find(
+        (item) => item.app_user_id === senderId,
+      );
       const senderExists = initialFriendsRequestsList.some(
         (item) => item.author_id === senderId,
       );
@@ -81,7 +79,6 @@ const Friends = () => {
         (item) => item.app_user_id === senderId,
       );
       const isFriendsRequest = chatItem.request_status === 'requested';
-      // console.log('log', isFriendsRequest, !senderExists, !isFirendApproved);
 
       if (
         isFriendsRequest &&
@@ -89,18 +86,14 @@ const Friends = () => {
         !isFirendApproved &&
         userId !== senderId
       ) {
-        // console.log('logging');
-        // console.log('findedUser', findedUser);
-        // const userInfo = {
-        //   app_user_id: findedUser.app_user_id,
-        //   app_user_name: findedUser.app_user_name,
-        //   activities: findedUser.profile.activities,
-        //   profile: findedUser.profile,
-        // };
-        // console.log('userInfo', userInfo);
-        // const chatItemWithProfile = {...chatItem, ...userInfo};
-        // console.log('chatItemWithProfile', chatItemWithProfile);
-        initialFriendsRequestsList.push(chatItem);
+        const userInfo = {
+          app_user_id: findedUser.app_user_id,
+          app_user_name: findedUser.app_user_name,
+          activities: findedUser.profile.activities,
+          profile: findedUser.profile,
+        };
+        const chatItemWithProfile = {...chatItem, ...userInfo};
+        initialFriendsRequestsList.push(chatItemWithProfile);
       }
     }
 

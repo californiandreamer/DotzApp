@@ -35,6 +35,7 @@ const LocationsList = ({title, locations}) => {
               title: location.loc_title,
               image: location.activity.activity_img,
               coordinates: location.loc_cors_all,
+              records: location.loc_records,
             })
           }>
           <View style={s.divider}>

@@ -27,6 +27,7 @@ const Messages = () => {
     const history = await axiosGet(chatHistoryPath, headers);
     const chatHistory = history[0];
     const usersHistory = history[1];
+    console.log('usersHistory', usersHistory);
     const reversedChatHistory = chatHistory.reverse();
 
     for (let i = 0; i < reversedChatHistory.length; i++) {

@@ -46,10 +46,6 @@ const CitiesList = ({locations, allLocations}) => {
           <Image style={s.arrow} source={ArrowRightImg} />
         </TouchableOpacity>
       ))}
-      {/* <TouchableOpacity style={[s.item, lastItemStyle]} activeOpacity={0.8}>
-        <Text style={s.name}>Chicago</Text>
-        <Image style={s.arrow} source={ArrowRightImg} />
-      </TouchableOpacity> */}
     </View>
   );
 };

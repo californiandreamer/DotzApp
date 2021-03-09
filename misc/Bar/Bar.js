@@ -1,11 +1,9 @@
-import React, {useState, useMemo, useRef, useEffect, Fragment} from 'react';
+import React, {useState, useEffect, Fragment, useRef} from 'react';
 import s from './Bar.s';
 import {
   View,
-  Text,
   Animated,
   ScrollView,
-  TouchableOpacity,
   PanResponder,
   Image,
   Dimensions,
@@ -26,21 +24,33 @@ import SuccessImg from '../../assets/icons/ic-agreeOn.png';
 import {getItem, setItem} from '../../hooks/useAsyncStorage';
 import {getHeadersWithToken} from '../../hooks/useApiData';
 import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
-import {updateFavoritesPath, updateRatePath} from '../../api/routes';
+import {
+  updateFavoritesPath,
+  updateRatePath,
+  updateRecordPath,
+} from '../../api/routes';
 import {errorsContent, postAddedContent, postDeleteContent} from '../../data';
-import {generateRandomId} from '../../hooks/useIdGenerator';
 import {getAccessToken} from '../../hooks/useAccessToken';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
 const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
+  const scrollRef = useRef(null);
+
   const [barStatusProps, setBarStatusProps] = useState({
     title,
     image: activity.activity_img,
     imageType: 'link',
   });
-  const [timerProps, setTimerProps] = useState({speed: 0, average: 0});
+  const [timerProps, setTimerProps] = useState({
+    speed: 0,
+    average: 0,
+    heading: 'You’re live:',
+  });
+  const [startRouteTime, setStartRouteTime] = useState(0);
   const [alertProps, setAlertProps] = useState({});
+  const [timeResult, setTimeResult] = useState(null);
+  const [activeElement, setActiveElement] = useState('barStatus');
   const [postInputValue, setPostInputValue] = useState('No description');
   const [isRouteStarted, setIsRouteStarted] = useState(false);
   const [isPublishingMode, setIsPublishingMode] = useState(false);
@@ -48,17 +58,6 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
   const [usersRouteCoordinates, setUsersRouteCoordinates] = useState([]);
   const [saveButtonText, setSaveButtonText] = useState('Save');
   const [socket, setSocket] = useState(null);
-
-  const calculateAverageSpeed = () => {
-    const arr = [1, 5, 7, 4, 7, 3, 7, 2, 8, 29];
-    const reduced = arr.reduce((a, b) => a + b, 0);
-    const length = arr.length;
-    const average = reduced / length;
-    console.log('average', average);
-  };
-  useEffect(() => {
-    calculateAverageSpeed();
-  }, []);
 
   const renderRater = (
     <Rater
@@ -71,7 +70,12 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
   const renderBarStatus = <BarStatus {...barStatusProps} />;
   const renderTimer = <Timer {...timerProps} />;
 
-  const [activeElement, setActiveElement] = useState(renderBarStatus);
+  const renderActiveElement =
+    activeElement === 'rater'
+      ? renderRater
+      : activeElement === 'timer'
+      ? renderTimer
+      : renderBarStatus;
 
   const connectToSocket = async () => {
     const token = await getAccessToken();
@@ -100,8 +104,11 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
 
   const startRoute = () => {
     if (userLocation.length !== 0) {
+      const startTime = new Date();
+
+      setStartRouteTime(startTime);
       setIsRouteStarted(true);
-      setActiveElement(renderTimer);
+      setActiveElement('timer');
     } else {
       setAlertProps({
         isVisible: true,
@@ -131,26 +138,49 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
         closeAction: hideAlert,
       });
     }
-  };
 
-  const finishRoute = () => {
     if (!barShowed) {
       showBar();
     }
+  };
+
+  const finishRoute = () => {
+    const finishTime = new Date();
+    const timeResult = (finishTime.getTime() - startRouteTime.getTime()) / 1000;
+    const formatedTimeResult = new Date(timeResult * 1000)
+      .toISOString()
+      .substr(11, 8);
+
     connectToSocket();
     setIsPublishingMode(true);
+    setTimeResult(formatedTimeResult);
+    setTimerProps({
+      ...timerProps,
+      heading: 'Your result is:',
+      time: formatedTimeResult,
+    });
   };
 
   const addPostRequest = async () => {
     const timeStamp = +new Date();
     const stringedTimeStamp = JSON.stringify(timeStamp);
+
+    let postData = new URLSearchParams();
+    const headers = await getHeadersWithToken('urlencoded');
+
+    postData.append('loc_id', id);
+    postData.append('loc_record', timeResult);
+
+    await axiosPost(updateRecordPath, postData, headers);
+
     const obj = {
-      pp_content: `${postInputValue}\nMy last time on ${title}: 12:32s`,
+      pp_content: `${postInputValue}\nMy last time on ${title}: ${timeResult}`,
       msg_timestamp_sent: stringedTimeStamp,
       post_action: 'addPost',
       type: 'record',
     };
     socket.send(JSON.stringify(obj));
+
     setAlertProps({
       isVisible: true,
       title: postAddedContent.title,
@@ -173,11 +203,23 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
   };
 
   const clearPostData = () => {
+    if (barShowed) {
+      hideBar();
+    }
     setIsRouteStarted(false);
     setIsPublishingMode(false);
-    setActiveElement(renderBarStatus);
+    setActiveElement('barStatus');
     setPostInputValue('No description');
     hideAlert();
+  };
+
+  const handleUserSpeed = (speed) => {
+    const initialArr = [0, 0];
+    const reduced = initialArr.reduce((a, b) => a + b, 0);
+    const length = initialArr.length;
+    const average = reduced / length;
+
+    setTimerProps({...timerProps, speed: speed, average: average});
   };
 
   const handleUserCoordinates = (e) => {
@@ -324,11 +366,7 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
   }, []);
 
   useEffect(() => {
-    setActiveElement(renderBarStatus);
-  }, [barStatusProps]);
-
-  useEffect(() => {
-    setActiveElement(renderBarStatus);
+    setActiveElement('barStatus');
     setBarStatusProps({title, image: activity.activity_img, imageType: 'link'});
   }, [title, activity]);
 
@@ -401,6 +439,7 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
   };
 
   const hideBar = () => {
+    scrollingTop();
     Animated.spring(animation, {
       toValue: {
         x: 0,
@@ -411,6 +450,12 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
       setOffset(innerHeight - 350);
     });
     setBarShowed(false);
+  };
+
+  const scrollingTop = async () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({y: 0, animated: true});
+    }, 0);
   };
 
   const renderResponder = (
@@ -442,7 +487,7 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
             style={'orange'}
             customStyle={{height: 39}}
             imageStyle={{borderRadius: 30}}
-            action={() => setActiveElement(renderRater)}
+            action={() => setActiveElement('rater')}
           />
         </View>
         <View style={s.item}>
@@ -515,7 +560,7 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
         />
         <MapboxGL.UserLocation
           onUpdate={(e) => {
-            setTimerProps({...timerProps, speed: e.coords.speed / 1.36});
+            handleUserSpeed(e.coords.speed / 1.36);
             handleUserCoordinates(e);
           }}
         />
@@ -560,17 +605,22 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
     </View>
   );
 
+  const renderLeaderboard = <Leaderboard data={records} />;
+
   return (
     <Animated.View style={[s.container, animatedStyle]}>
       <View style={s.inner}>
         {renderResponder}
         {renderAlert}
-        <ScrollView style={s.scrollBox} scrollEnabled={barShowed}>
-          {activeElement}
+        <ScrollView
+          style={s.scrollBox}
+          scrollEnabled={barShowed}
+          ref={scrollRef}>
+          {renderActiveElement}
           {renderButtonsRow}
           {renderPostInput}
           {renderMap}
-          <Leaderboard />
+          {renderLeaderboard}
         </ScrollView>
       </View>
     </Animated.View>

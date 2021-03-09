@@ -12,6 +12,7 @@ const FilteredLocations = ({route}) => {
   const path = '/locations';
 
   const [locations, setLocations] = useState([]);
+  const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
 
   const checkRoureParams = () => {
@@ -23,15 +24,17 @@ const FilteredLocations = ({route}) => {
   };
 
   const filterLocations = () => {
-    setSubtitle('');
     const data = route.params.data;
     const value = route.params.filterValue;
 
     const filteredData = data.filter((item) => item.loc_city === value);
     setLocations(filteredData);
+    setTitle(value);
+    setSubtitle('');
   };
 
   const getFavoriteLocations = async () => {
+    setTitle('Saved');
     const profileData = await getItem('profile');
     const parsedProfileData = JSON.parse(profileData);
     const favoriteLocations = parsedProfileData.profile_favourite_locs;
@@ -64,7 +67,7 @@ const FilteredLocations = ({route}) => {
   return (
     <ScrollView style={s.container} onTouchEnd={checkRoureParams}>
       <Header />
-      <HeadLine title={'Saved'} subtitle={subtitle} />
+      <HeadLine title={title} subtitle={subtitle} />
       <LocationsList locations={locations} />
     </ScrollView>
   );

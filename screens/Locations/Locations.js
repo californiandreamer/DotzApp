@@ -159,6 +159,7 @@ const Locations = ({route}) => {
   const getLocations = async () => {
     const headers = await getHeadersWithAccessToken();
     const locations = await axiosGet(locationsPath, headers);
+    console.log('locations', locations);
     setLocationsData(locations);
   };
 

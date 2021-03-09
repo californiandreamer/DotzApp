@@ -3,8 +3,8 @@ import {ScrollView, StyleSheet, View} from 'react-native';
 import Button from '../../misc/Button/Button';
 import Header from '../../misc/Header/Header';
 import BarStatus from '../../misc/BarStatus/BarStatus';
-import LeaderboardComponent from '../../misc/Leaderboard/Leaderboard';
-import {CommonActions, useNavigation} from '@react-navigation/native';
+import Leaderboard from '../../misc/Leaderboard/Leaderboard';
+import {useNavigation} from '@react-navigation/native';
 
 const CheckOut = ({route}) => {
   const data = {...route.params};
@@ -26,7 +26,7 @@ const CheckOut = ({route}) => {
           style={'orange'}
           action={() => stackPush('Locations', {...data})}
         />
-        <LeaderboardComponent />
+        <Leaderboard data={data.records} />
       </View>
     </ScrollView>
   );

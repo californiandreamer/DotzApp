@@ -1,22 +1,25 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import s from './Timer.s';
 import {View, Text, Image} from 'react-native';
 import PolygonImg from '../../assets/icons/ic-Polygon.png';
-import {formatTime} from '../../utils/TimeFormater';
 
-const Timer = ({time, speed}) => {
+const Timer = ({heading, time, speed, average}) => {
   console.log('speed', speed);
   return (
     <View style={s.container}>
       <View style={s.row}>
         <Image style={s.image} source={PolygonImg} />
-        <Text style={s.heading}>You’re live:</Text>
+        <Text style={s.heading}>{heading}</Text>
       </View>
       <View style={s.row}>
-        <Text style={s.timer}>00:00:00</Text>
+        {time ? (
+          <Text style={s.timer}>{time}</Text>
+        ) : (
+          <Text style={s.timer}>{speed} Mi / h</Text>
+        )}
       </View>
       <View style={s.row}>
-        <Text style={s.speed}>{speed} Mi / h. speed</Text>
+        <Text style={s.speed}>{average} avg speed</Text>
       </View>
     </View>
   );

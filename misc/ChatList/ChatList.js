@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 import {useNavigation} from '@react-navigation/native';
 import {profileImageUrl} from '../../api/api';
+import AvatarPlaceholderImg from '../../assets/images/avatar.jpg';
 
 const ChatList = ({list, refreshing, onRefresh}) => {
   const navigation = useNavigation();
@@ -41,8 +41,9 @@ const ChatList = ({list, refreshing, onRefresh}) => {
             <Image
               style={s.image}
               source={
-                // {uri: `${profileImageUrl}${item.profile.profile_img_ava}`} ||
-                AvatarPlaceholderImg
+                item.profile && item.profile.profile_img_ava
+                  ? {uri: `${profileImageUrl}${item.profile.profile_img_ava}`}
+                  : AvatarPlaceholderImg
               }
             />
             <View style={s.content}>

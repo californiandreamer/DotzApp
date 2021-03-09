@@ -39,6 +39,9 @@ const Main = () => {
   const navigation = useNavigation();
 
   const [usersData, setUsersData] = useState([]);
+  console.log('usersData', usersData);
+  const [blastPinsData, setBlastPinsData] = useState([]);
+  console.log('blastPinsData', blastPinsData);
   const [userLocation, setUserLocation] = useState([]);
   const [userId, setUserId] = useState('');
   const [blastMessageContent, setBlastMessageContent] = useState('');
@@ -73,6 +76,7 @@ const Main = () => {
     navigation.push(route, params);
   };
 
+  const initialPinsArr = [];
   const connectToSocket = async () => {
     const token = await getAccessToken();
     const profile = await getItem('profile');
@@ -106,7 +110,21 @@ const Main = () => {
       console.log('onmessage', parsedData);
       if (parsedData.hasOwnProperty('users')) {
         const users = parsedData.users;
-        setUsersData(users);
+        setUsersData([...users]);
+
+        for (let i = 0; i < users.length; i++) {
+          const item = users[i];
+          const pin = item.c_user_profile.bPin_ev;
+          const isExist = initialPinsArr.some(
+            (el) =>
+              el.pin_data.bPin_ev_id === item.c_user_profile.bPin_ev.bPin_ev_id,
+          );
+
+          if (pin !== null && !isExist) {
+            initialPinsArr.push({...item, pin_data: {...pin}});
+          }
+          setBlastPinsData([...initialPinsArr]);
+        }
       }
       if (parsedData.hasOwnProperty('bPin_ev_author')) {
         const senderId = parsedData.bPin_ev_author;
@@ -305,7 +323,8 @@ const Main = () => {
 
   const sendBlastPin = () => {
     const timeStamp = +new Date();
-    const expiringTimeStamp = timeStamp + 10800;
+    const convertedTimeStamp = timeStamp / 1000;
+    const expiringTimeStamp = convertedTimeStamp + 10800;
     const stringedTimeStamp = JSON.stringify(timeStamp);
     const stringedExpiringTimeStamp = JSON.stringify(expiringTimeStamp);
     const stringedBlastPinCoordinates = JSON.stringify(blastPinCoordinates);
@@ -318,6 +337,7 @@ const Main = () => {
     };
     const stringedObj = JSON.stringify(obj);
     console.log('obj', obj);
+
     if (socket && blastPinCoordinates.length !== 0) {
       socket.send(stringedObj);
       cancelBlastPin();
@@ -453,6 +473,31 @@ const Main = () => {
     </MapboxGL.MarkerView>
   );
 
+  const renderPins = blastPinsData.map((pin) => (
+    <MapboxGL.MarkerView
+      key={pin.pin_data.bPin_ev_id}
+      id={pin.pin_data.bPin_ev_id}
+      coordinate={JSON.parse(pin.pin_data.bPin_cors)}>
+      <TouchableOpacity
+        style={s.blastPinMap}
+        activeOpacity={0.8}
+        onPress={() => {
+          setPopUpVisible(true);
+          setPopUpProps({
+            name: pin.c_name,
+            image: pin.c_user_profile.profile_img_ava,
+            title: 'Blast Pin',
+            type: 'receive',
+            text: pin.pin_data.bPin_msg,
+            action1: () => confirmBlastPin(pin.pin_data.bPin_ev_id),
+            closeAction: hidePopUp,
+          });
+        }}>
+        <Image style={s.blastPinImg} source={LocationImg} />
+      </TouchableOpacity>
+    </MapboxGL.MarkerView>
+  ));
+
   const renderUsers = usersData.map((user) =>
     user.my_cur_loc !== null && user.c_user_id !== userId ? (
       <MapboxGL.MarkerView
@@ -527,6 +572,7 @@ const Main = () => {
           }
         />
         {renderUsers}
+        {renderPins}
         {blastPinMode ? renderBlastPin : null}
       </MapboxGL.MapView>
       {[renderBurger, renderBlastMessageBtn, renderBlastPinBtn]}
@@ -702,6 +748,10 @@ const s = StyleSheet.create({
     height: 50,
     left: '50%',
     transform: [{translateX: -25}],
+  },
+  blastPinMap: {
+    width: 50,
+    height: 50,
   },
   blastPinImg: {
     width: 50,

@@ -24,4 +24,6 @@ export const updateFavoritesPath = 'profiles/favourite_add';
 
 export const updateRatePath = 'locations/loc_rate';
 
+export const updateRecordPath = 'locations/loc_record';
+
 export const addLocationPath = 'locs_p/add';

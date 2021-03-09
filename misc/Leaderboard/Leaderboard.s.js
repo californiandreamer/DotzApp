@@ -46,10 +46,10 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   image: {
-    width: 61,
-    height: 61,
-    resizeMode: 'contain',
-    borderRadius: 61,
+    width: 55,
+    height: 55,
+    resizeMode: 'cover',
+    borderRadius: 55,
   },
   text: {
     paddingHorizontal: 15,
@@ -63,5 +63,11 @@ export default StyleSheet.create({
     fontFamily: 'Gilroy-Regular',
     fontSize: 14,
     color: '#040415',
+  },
+  info: {
+    width: '100%',
+    fontFamily: 'Gilroy-Regular',
+    fontSize: 16,
+    color: '#F0FCFF',
   },
 });

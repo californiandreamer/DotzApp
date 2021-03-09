@@ -21,6 +21,13 @@ const FriendsList = ({
   approveFrendshipAction,
   onRefresh,
 }) => {
+  const [disabledButtons, setDisabledButtons] = useState([]);
+
+  const checkIsButtonDisabled = (id) => {
+    const isInclude = disabledButtons.includes(id);
+    return isInclude;
+  };
+
   console.log('list', list);
   return (
     <ScrollView
@@ -59,10 +66,26 @@ const FriendsList = ({
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={s.confirmButton}
+                style={[
+                  s.confirmButton,
+                  {
+                    opacity: checkIsButtonDisabled(
+                      item.app_user_id || item.author_id,
+                    )
+                      ? 0.7
+                      : 1,
+                  },
+                ]}
                 activeOpacity={0.8}
+                disabled={checkIsButtonDisabled(
+                  item.app_user_id || item.author_id,
+                )}
                 onPress={() => {
                   approveFrendshipAction(item.app_user_id || item.author_id);
+                  setDisabledButtons((prev) => [
+                    ...prev,
+                    item.app_user_id || item.author_id,
+                  ]);
                 }}>
                 <Text style={s.buttonText}>Confirm</Text>
               </TouchableOpacity>
@@ -70,7 +93,6 @@ const FriendsList = ({
             <TouchableOpacity
               style={s.profileButton}
               activeOpacity={0.8}
-              // disabled={type === 'Friends' ? false : true}
               onPress={() =>
                 showProfileAction('Profile', {
                   id: item.app_user_id,
