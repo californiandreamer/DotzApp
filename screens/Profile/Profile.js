@@ -20,6 +20,7 @@ import DistanceImg from '../../assets/icons/ic-distance.png';
 import PersonImg from '../../assets/icons/Ic-Profile.png';
 import SettingsImg from '../../assets/icons/Ic-Setting.png';
 import LocationImg from '../../assets/icons/ic-Location2.png';
+import VerificationImg from '../../assets/icons/ic-verification.png';
 import {mapBoxToken, profileImageUrl, socketUrl} from '../../api/api';
 import {getItem, setItem} from '../../hooks/useAsyncStorage';
 import {axiosGet, axiosPost} from '../../hooks/useAxios';
@@ -70,6 +71,7 @@ const Profile = ({route}) => {
   const getProfileData = async () => {
     const data = await getItem('profile');
     const parsedData = JSON.parse(data);
+    console.log('parsedData', parsedData);
     setCurrentActivity(parsedData.profile_current_act);
     setProfileData({
       id: parsedData.profile_id,
@@ -80,6 +82,7 @@ const Profile = ({route}) => {
       activities: parsedData.activities,
       image: parsedData.profile_img_ava,
       posts: parsedData.posts,
+      verified: parsedData.profile_verified,
     });
     getActivities(parsedData.activities);
   };
@@ -209,8 +212,11 @@ const Profile = ({route}) => {
         />
       </View>
       <View style={s.content}>
-        <View style={s.wrapper}>
+        <View style={s.rowWrapper}>
           <Text style={s.name}>{profileData.name}</Text>
+          {profileData.verified && profileData.verified !== '0' ? (
+            <Image style={s.verificationImg} source={VerificationImg} />
+          ) : null}
         </View>
         <View style={s.rowWrapper}>
           <Image style={s.locationImg} source={LocationImg} />
@@ -300,6 +306,12 @@ const s = StyleSheet.create({
     fontFamily: 'Gilroy-SemiBold',
     fontSize: 20,
     color: '#fff',
+  },
+  verificationImg: {
+    width: 23,
+    height: 23,
+    resizeMode: 'contain',
+    marginLeft: 5,
   },
   locationImg: {
     width: 23,

@@ -58,17 +58,18 @@ const Login = () => {
     const stringedData = JSON.stringify(data);
     await setItem('access_token', token);
     await setItem('profile', stringedData);
-    checkActivity(data);
+    // checkActivity(data);
+    stackNavigate('ChooseActivity');
   };
 
-  const checkActivity = async (data) => {
-    const currentActivity = data.profile_current_act;
-    if (currentActivity !== null) {
-      stackNavigate('Root');
-    } else {
-      stackNavigate('ChooseActivity');
-    }
-  };
+  // const checkActivity = async (data) => {
+  //   const currentActivity = data.profile_current_act;
+  //   if (currentActivity !== null) {
+  //     stackNavigate('Root');
+  //   } else {
+  //     stackNavigate('ChooseActivity');
+  //   }
+  // };
 
   const stackNavigate = (route, params) => {
     navigation.navigate(route, params);

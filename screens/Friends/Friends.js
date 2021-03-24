@@ -13,7 +13,7 @@ import OrangeGradientImg from '../../assets/images/gradient.jpg';
 import NewFriendImg from '../../assets/icons/ic-new-friend.png';
 
 const Friends = () => {
-  const [listType, setListType] = useState('Friends');
+  const [listType, setListType] = useState('Teammates');
   const [friendsList, setFriendsList] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [friendsRequestsList, setFriendsRequestsList] = useState([]);
@@ -26,7 +26,9 @@ const Friends = () => {
   };
 
   const toggleListType = () => {
-    setListType((prev) => (prev === 'Friends' ? 'Friend requests' : 'Friends'));
+    setListType((prev) =>
+      prev === 'Teammates' ? 'Teammate requests' : 'Teammates',
+    );
   };
 
   const getFriendsList = async () => {
@@ -140,7 +142,9 @@ const Friends = () => {
       <View style={s.wrapper}>
         <FriendsList
           list={
-            listType === 'Friend requests' ? friendsRequestsList : friendsList
+            listType === 'Teammates requests'
+              ? friendsRequestsList
+              : friendsList
           }
           type={listType}
           refreshing={refreshing}

@@ -139,7 +139,7 @@ const SignUpForm = ({action, onError}) => {
         <TouchableOpacity onPress={() => action('Login')} activeOpacity={0.8}>
           <Text style={s.text}>
             Already have an account? {''}
-            <Text style={s.textBold}>Sign Up</Text>
+            <Text style={s.textBold}>Log in</Text>
           </Text>
         </TouchableOpacity>
       </View>

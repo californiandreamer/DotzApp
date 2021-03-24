@@ -35,13 +35,12 @@ import {TextInput} from 'react-native-gesture-handler';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
-const Main = () => {
+const Main = ({route}) => {
   const navigation = useNavigation();
 
   const [usersData, setUsersData] = useState([]);
   console.log('usersData', usersData);
   const [blastPinsData, setBlastPinsData] = useState([]);
-  console.log('blastPinsData', blastPinsData);
   const [userLocation, setUserLocation] = useState([]);
   const [userId, setUserId] = useState('');
   const [blastMessageContent, setBlastMessageContent] = useState('');
@@ -50,7 +49,6 @@ const Main = () => {
   const [blastPinContent, setBlastPinContent] = useState("Let's meet here");
   const [blastPinCoordinates, setBlastPinCoordinates] = useState(userLocation);
   const [blastPinMode, setBlastPinMode] = useState(false);
-  const [blastPinToggle, setBlastPinToggle] = useState(false);
   const [userCurrentActivity, setUserCurrentActivity] = useState('1');
   const [activities, setActivities] = useState([]);
   const [alertVisible, setAlertVisible] = useState(false);
@@ -76,33 +74,18 @@ const Main = () => {
     navigation.push(route, params);
   };
 
-  const initialPinsArr = [];
+  let initialPinsArr = [];
   const connectToSocket = async () => {
     const token = await getAccessToken();
-    const profile = await getItem('profile');
-    const parsedProfile = JSON.parse(profile);
-    const privacyBubble = parsedProfile.profile_privacy_buble;
-    const parsedPrivacyBubble = JSON.parse(privacyBubble);
-    const distance = calculateByCoordinates(userLocation, parsedPrivacyBubble);
-    const distanceInMiles = distance * 1.36;
+    // const profile = await getItem('profile');
+    // const parsedProfile = JSON.parse(profile);
+    // const privacyBubble = parsedProfile.profile_privacy_buble;
+    // const parsedPrivacyBubble = JSON.parse(privacyBubble);
+    // const distance = calculateByCoordinates(userLocation, parsedPrivacyBubble);
+    // const distanceInMiles = distance * 1.36;
 
     const conn = new WebSocket(`${socketUrl}${token}`);
     setSocket(conn);
-
-    const timeStamp = +new Date();
-    const stringedTimeStamp = JSON.stringify(timeStamp);
-    const stringedUserLocation = JSON.stringify(userLocation);
-    const obj = {
-      my_cur_loc: stringedUserLocation,
-      msg_timestamp_sent: stringedTimeStamp,
-    };
-    const stringed = JSON.stringify(obj);
-
-    conn.onopen = (e) => {
-      if (distanceInMiles > privacyBubbleData.distance) {
-        conn.send(stringed);
-      }
-    };
 
     conn.onmessage = (e) => {
       const data = e.data;
@@ -127,34 +110,33 @@ const Main = () => {
         }
       }
       if (parsedData.hasOwnProperty('bPin_ev_author')) {
-        const senderId = parsedData.bPin_ev_author;
-        const eventId = parsedData.bPin_ev_id;
-        const findedUser = usersData.find(
-          (item) => item.c_user_id === senderId,
-        );
-        const findedUserName = findedUser.c_name;
-        const findedUserImage = findedUser.c_user_profile.profile_img_ava;
+        // const senderId = parsedData.bPin_ev_author;
+        // const eventId = parsedData.bPin_ev_id;
+        // const findedUser = usersData.find(
+        //   (item) => item.c_user_id === senderId,
+        // );
+        // const findedUserName = findedUser.c_name;
+        // const findedUserImage = findedUser.c_user_profile.profile_img_ava;
 
-        if (senderId !== userId) {
-          setPopUpVisible(true);
-          setPopUpProps({
-            name: findedUserName,
-            image: findedUserImage,
-            title: 'Blast Pin',
-            type: 'receive',
-            text: parsedData.bPin_msg,
-            action1: () => confirmBlastPin(eventId),
-            closeAction: hidePopUp,
-          });
-        } else {
+        if (senderId === userId) {
           setAlertVisible(true);
           setAlertProps({
             type: 'error',
             title: 'Success',
-            text:
-              'Your blast pin was received by each user with choosen activity',
+            text: 'Your blast pin was posted',
             closeAction: hideAlert,
           });
+
+          // setPopUpVisible(true);
+          // setPopUpProps({
+          //   name: findedUserName,
+          //   image: findedUserImage,
+          //   title: 'Blast Pin',
+          //   type: 'receive',
+          //   text: parsedData.bPin_msg,
+          //   action1: () => confirmBlastPin(eventId),
+          //   closeAction: hidePopUp,
+          // });
         }
       }
       if (parsedData.hasOwnProperty('bPin_ev_joiner')) {
@@ -217,6 +199,29 @@ const Main = () => {
         }
       }
     };
+  };
+
+  const handleUserLocationChanging = async () => {
+    const profile = await getItem('profile');
+    const parsedProfile = JSON.parse(profile);
+    const privacyBubble = parsedProfile.profile_privacy_buble;
+    const parsedPrivacyBubble = JSON.parse(privacyBubble);
+    const distance = calculateByCoordinates(userLocation, parsedPrivacyBubble);
+    const distanceInMiles = distance * 1.36;
+
+    const timeStamp = +new Date();
+    // const formatedTimeStamp = timeStamp / 1000;
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const stringedUserLocation = JSON.stringify(userLocation);
+    const obj = {
+      my_cur_loc: stringedUserLocation,
+      msg_timestamp_sent: stringedTimeStamp,
+    };
+    const stringed = JSON.stringify(obj);
+
+    if (distanceInMiles > privacyBubbleData.distance) {
+      socket.send(stringed);
+    }
   };
 
   const checkFriendship = (user) => {
@@ -306,14 +311,6 @@ const Main = () => {
 
   const addBlastPin = () => {
     setBlastPinMode((prev) => !prev);
-    // setAlertVisible(true);
-    // setAlertProps({
-    //   title: 'Submit a blast pin',
-    //   text: 'Set pin, where you want to create the event',
-    //   type: 'choice',
-    //   action2: () => setBlastPinToggle((prev) => !prev),
-    //   closeAction: cancelBlastPin,
-    // });
   };
 
   const handleBlastPinCoordinates = (e) => {
@@ -388,8 +385,12 @@ const Main = () => {
   }, []);
 
   useEffect(() => {
-    connectToSocket();
+    handleUserLocationChanging();
   }, [userLocation]);
+
+  useEffect(() => {
+    connectToSocket();
+  }, [route]);
 
   useEffect(() => {
     sendBlastMessage();
@@ -518,17 +519,6 @@ const Main = () => {
             activeOpacity={0.8}
             onPress={() => setActiveUser(user.c_user_id)}>
             {(() => checkFriendship(user))()}
-            <Image
-            // style={s.mapPopUpImg}
-            // source={checkFriendship(user)}
-
-            //  ?
-            // :
-            // {
-            //     uri: `${profileImageUrl}/${user.c_user_profile.profile_img_ava}`,
-            //   }
-            // AvatarPlaceholderImg
-            />
           </TouchableOpacity>
           {activeUser === user.c_user_id ? (
             <Fragment>
@@ -544,6 +534,8 @@ const Main = () => {
                     activities: user.c_user_profile.activities,
                     currentActivity: user.c_user_profile.profile_current_act,
                     image: user.c_user_profile.profile_img_ava,
+                    activities: user.c_user_profile.activities,
+                    verified: user.c_user_profile.profile_verified,
                   })
                 }>
                 <Image style={s.nextImg} source={NextImg} />
@@ -566,7 +558,7 @@ const Main = () => {
         onLongPress={() => setActiveUser(null)}>
         <MapboxGL.Camera zoomLevel={12} followUserLocation />
         <MapboxGL.UserLocation
-          minDisplacement={100}
+          minDisplacement={1000}
           onUpdate={(e) =>
             setUserLocation([e.coords.longitude, e.coords.latitude])
           }
@@ -736,9 +728,9 @@ const s = StyleSheet.create({
     color: '#fff',
   },
   blastPinInput: {
-    height: 50,
+    height: 60,
     textAlign: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: '#141F25',
     fontFamily: 'Gilroy-SemiBold',
     fontSize: 16,
     color: '#F0FCFF',

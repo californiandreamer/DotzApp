@@ -1,6 +1,9 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Image} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
+import {
+  NavigationContainer,
+  useNavigationState,
+} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import Login from '../screens/Login/Login';
@@ -21,6 +24,8 @@ import MessageIcon from '../assets/icons/Ic-Message2.png';
 import PersonIcon from '../assets/icons/Ic-Profile-menu.png';
 import FriendsIcon from '../assets/icons/Ic-User.png';
 import SavedIcon from '../assets/icons/Ic-Star.png';
+import BookmarkIcon from '../assets/icons/bookmark.png';
+import ElipseIcon from '../assets/icons/ellipse.png';
 import LocationIcon from '../assets/icons/ic-Location-menu.png';
 import Settings from '../screens/Settings/Settings';
 import Start from '../screens/Start/Start';
@@ -38,7 +43,7 @@ const DrawerNavigator = () => {
 
   return (
     <Drawer.Navigator
-      initialRouteName="Locations"
+      initialRouteName="Main"
       drawerStyle={{backgroundColor: '#F18303', opacity: 0.9}}
       drawerContentOptions={{
         labelStyle: {
@@ -69,8 +74,24 @@ const DrawerNavigator = () => {
         name="Friends"
         component={Friends}
         options={{
-          drawerLabel: 'Friends',
+          drawerLabel: 'Teammates',
           drawerIcon: () => <Image style={iconStyle} source={FriendsIcon} />,
+        }}
+      />
+      <Drawer.Screen
+        name="Cities"
+        component={Cities}
+        options={{
+          drawerLabel: 'Rankings',
+          drawerIcon: () => <Image style={iconStyle} source={SavedIcon} />,
+        }}
+      />
+      <Drawer.Screen
+        name="FilteredLocations"
+        component={FilteredLocations}
+        options={{
+          drawerLabel: 'Saved',
+          drawerIcon: () => <Image style={iconStyle} source={BookmarkIcon} />,
         }}
       />
       <Drawer.Screen
@@ -82,15 +103,13 @@ const DrawerNavigator = () => {
         }}
       />
       <Drawer.Screen
-        name="FilteredLocations"
-        component={FilteredLocations}
+        name="Main"
+        component={Main}
         options={{
-          drawerLabel: 'Saved',
-          drawerIcon: () => <Image style={iconStyle} source={SavedIcon} />,
+          drawerLabel: 'DOTZ',
+          drawerIcon: () => <Image style={iconStyle} source={ElipseIcon} />,
         }}
       />
-      <Drawer.Screen name="Main" component={Main} />
-      <Drawer.Screen name="Cities" component={Cities} />
     </Drawer.Navigator>
   );
 };
@@ -98,7 +117,7 @@ const DrawerNavigator = () => {
 const Navigation = () => (
   <NavigationContainer>
     <Stack.Navigator
-      initialRouteName="Root"
+      initialRouteName="Start"
       screenOptions={{
         headerShown: false,
       }}>

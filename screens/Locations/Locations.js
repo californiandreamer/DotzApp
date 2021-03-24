@@ -12,7 +12,7 @@ import {
 import * as turf from '@turf/turf';
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {useNavigation, DrawerActions} from '@react-navigation/native';
-import {defaultLocation} from '../../data';
+import {cities, defaultLocation} from '../../data';
 import {activitiesImageUrl, mapBoxToken} from '../../api/api';
 import {addLocationPath, locationsPath} from '../../api/routes';
 import {getItem} from '../../hooks/useAsyncStorage';
@@ -22,6 +22,7 @@ import {generateRandomId} from '../../hooks/useIdGenerator';
 import {getHeadersWithAccessToken} from '../../hooks/useAccessToken';
 import PlusImg from '../../assets/icons/ic-plus.png';
 import RouteImg from '../../assets/icons/ic-plus1.png';
+import WalkImg from '../../assets/icons/ic-walk.png';
 import BurgerImg from '../../assets/icons/ic-menu.png';
 import CompassImg from '../../assets/icons/ic-plus2.png';
 import NextImg from '../../assets/icons/icon-siguiente.png';
@@ -30,6 +31,7 @@ import BlastMessageImg from '../../assets/icons/ic-message.png';
 import Bar from '../../misc/Bar/Bar';
 import Alert from '../../misc/Alert/Alert';
 import PopUp from '../../misc/PopUp/PopUp';
+import CitySelector from '../../misc/CitySelector/CitySelector';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -45,19 +47,26 @@ const Locations = ({route}) => {
   const [popUpProps, setPopUpProps] = useState({});
   const [alertProps, setAlertProps] = useState({});
 
+  const [cityValue, setCityValue] = useState('No city');
+  const [alertInputValue, setAlertInputValue] = useState('No name');
   const [routeToggle, setRouteToggle] = useState(false);
+  const [gpsRouteToggle, setGpsRouteToggle] = useState(false);
   const [placeToggle, setPlaceToggle] = useState(false);
   const [activeLocation, setActiveLocation] = useState(null);
   const [cameraCentering, setCameraCentering] = useState([]);
   const [userStartLocation, setUserStartLocation] = useState(defaultLocation);
-  const [alertCityValue, setAlertCityValue] = useState('No city');
-  const [alertInputValue, setAlertInputValue] = useState('No name');
   const [routeDrawerActive, setRouteDrawerActive] = useState(false);
+  const [gpsRouteDrawerActive, setGpsRouteDrawerActive] = useState(false);
   const [placeDrawerActive, setPlaceDrawerActive] = useState(false);
+  const [citySelectorVisible, setCitySelectorVisible] = useState(false);
   const [drawedRouteCoordinates, setDrawedRouteCoordinates] = useState([]);
+  const [drawedGpsRouteCoordinates, setGpsDrawedRouteCoordinates] = useState(
+    [],
+  );
   const [drawedPlaceCoordinates, setDrawedPlaceCoordinates] = useState([]);
 
   const rotatingVal = useRef(new Animated.Value(0)).current;
+  const gpsRouteBtnVal = useRef(new Animated.Value(30)).current;
   const routeBtnVal = useRef(new Animated.Value(30)).current;
   const placeBtnVal = useRef(new Animated.Value(30)).current;
   const textOpacityVal = useRef(new Animated.Value(0)).current;
@@ -73,6 +82,11 @@ const Locations = ({route}) => {
   };
 
   const showOptions = () => {
+    Animated.timing(gpsRouteBtnVal, {
+      toValue: 220,
+      duration: 500,
+      useNativeDriver: false,
+    }).start();
     Animated.timing(routeBtnVal, {
       toValue: 160,
       duration: 500,
@@ -96,6 +110,11 @@ const Locations = ({route}) => {
   };
 
   const hideOptions = () => {
+    Animated.timing(gpsRouteBtnVal, {
+      toValue: 30,
+      duration: 500,
+      useNativeDriver: false,
+    }).start();
     Animated.timing(routeBtnVal, {
       toValue: 30,
       duration: 500,
@@ -132,8 +151,12 @@ const Locations = ({route}) => {
   };
 
   const handleUserLocation = (e) => {
-    const coordinates = [e.coords.longitude, e.coords.latitude];
+    const longitude = e.coords.longitude;
+    const latitude = e.coords.latitude;
+    const coordinates = [longitude, latitude];
+
     setUserStartLocation(coordinates);
+    setGpsDrawedRouteCoordinates((prev) => [...prev, coordinates]);
   };
 
   const hidePopUp = () => {
@@ -149,17 +172,18 @@ const Locations = ({route}) => {
 
   const cancelAdding = () => {
     setAlertInputValue('No name');
-    setAlertCityValue('No city');
+    setCityValue('No city');
     setAlertVisible(false);
     setRouteDrawerActive(false);
     setDrawedRouteCoordinates([]);
     setPlaceDrawerActive(false);
+    setGpsRouteDrawerActive(false);
+    setGpsDrawedRouteCoordinates([]);
   };
 
   const getLocations = async () => {
     const headers = await getHeadersWithAccessToken();
     const locations = await axiosGet(locationsPath, headers);
-    console.log('locations', locations);
     setLocationsData(locations);
   };
 
@@ -172,20 +196,33 @@ const Locations = ({route}) => {
     drawedPlaceCoordinates.length === 0
       ? turf.geometry('Point', userStartLocation)
       : turf.geometry('Point', drawedPlaceCoordinates);
+
   const drawPlace = (e) => {
     const touchCoordinates = e.geometry.coordinates;
     setDrawedPlaceCoordinates(touchCoordinates);
   };
 
-  const returnShape = () => {
-    if (drawedRouteCoordinates.length <= 1) {
-      const point = turf.geometry('Point', drawedRouteCoordinates[0]);
-      return point;
+  const returnShape = (type) => {
+    if (type === 'gpsRoute') {
+      if (drawedGpsRouteCoordinates.length <= 1) {
+        const point = turf.geometry('Point', drawedGpsRouteCoordinates[0]);
+        return point;
+      } else {
+        const point = turf.geometry('MultiPoint', []);
+        const line = turf.geometry('LineString', drawedGpsRouteCoordinates);
+        const collection = turf.geometryCollection([point, line]);
+        return collection;
+      }
     } else {
-      const point = turf.geometry('MultiPoint', []);
-      const line = turf.geometry('LineString', drawedRouteCoordinates);
-      const collection = turf.geometryCollection([point, line]);
-      return collection;
+      if (drawedRouteCoordinates.length <= 1) {
+        const point = turf.geometry('Point', drawedRouteCoordinates[0]);
+        return point;
+      } else {
+        const point = turf.geometry('MultiPoint', []);
+        const line = turf.geometry('LineString', drawedRouteCoordinates);
+        const collection = turf.geometryCollection([point, line]);
+        return collection;
+      }
     }
   };
 
@@ -194,7 +231,6 @@ const Locations = ({route}) => {
     const profileData = await getItem('profile');
     const parsedProfileData = JSON.parse(profileData);
     const currentActivity = parsedProfileData.profile_current_act;
-    console.log('test');
 
     let routes;
     let start;
@@ -210,6 +246,12 @@ const Locations = ({route}) => {
       routes = JSON.stringify(drawedPlaceCoordinates);
       start = JSON.stringify(drawedPlaceCoordinates);
       finish = JSON.stringify(drawedPlaceCoordinates);
+    } else if (type === 'gpsRoute' && drawedGpsRouteCoordinates.length !== 0) {
+      routes = JSON.stringify(drawedGpsRouteCoordinates);
+      start = JSON.stringify(drawedGpsRouteCoordinates[0]);
+      finish = JSON.stringify(
+        drawedGpsRouteCoordinates[drawedGpsRouteCoordinates.length - 1],
+      );
     } else {
       routes = undefined;
       start = undefined;
@@ -219,7 +261,7 @@ const Locations = ({route}) => {
     let postData = new URLSearchParams();
     postData.append('activity_id', currentActivity);
     postData.append('loc_p_title', alertInputValue);
-    postData.append('loc_p_city', alertCityValue);
+    postData.append('loc_p_city', cityValue);
     postData.append('loc_p_cors_start', start);
     postData.append('loc_p_cors_finish', finish);
     postData.append('loc_p_cors_all', routes);
@@ -238,9 +280,10 @@ const Locations = ({route}) => {
       text: `Enter a name of this ${type}`,
       text2: 'Enter a name of city',
       type: 'input',
+      cityValue,
       onType: (val) => setAlertInputValue(val),
-      onType2: (val) => setAlertCityValue(val),
       action1: () => nextAlertStep(type),
+      action2: () => showCitySelector(),
       closeAction: () => cancelAdding(),
     });
   };
@@ -248,6 +291,8 @@ const Locations = ({route}) => {
   const nextAlertStep = (type) => {
     if (type === 'route') {
       setRouteDrawerActive(true);
+    } else if (type === 'GPS route') {
+      setGpsRouteDrawerActive(true);
     } else {
       setPlaceDrawerActive(true);
     }
@@ -256,15 +301,27 @@ const Locations = ({route}) => {
       text:
         type === 'route'
           ? 'Draw a Route from Start to Finish'
-          : 'Drop a Pin on a Place you want to submit',
+          : type === 'place'
+          ? 'Drop a Pin on a Place you want to submit'
+          : 'Walk/drive the route you want to submit',
       type: 'choice',
       closeAction: () => cancelAdding(),
       action1: () =>
         type === 'route'
           ? setRouteToggle((prev) => !prev)
-          : setPlaceToggle((prev) => !prev), // toggle because function doesn't see state updates
+          : type === 'place'
+          ? setPlaceToggle((prev) => !prev)
+          : setGpsRouteToggle((prev) => !prev), // toggle because function doesn't see state updates
       closeAction: () => cancelAdding(),
     });
+  };
+
+  const showCitySelector = () => {
+    setCitySelectorVisible(true);
+  };
+
+  const hideCitySelector = () => {
+    setCitySelectorVisible(false);
   };
 
   useEffect(() => {
@@ -277,9 +334,16 @@ const Locations = ({route}) => {
   }, [routeToggle]);
 
   useEffect(() => {
-    console.log('test2');
+    addLocaitonRequest('gpsRoute');
+  }, [gpsRouteToggle]);
+
+  useEffect(() => {
     addLocaitonRequest('place');
   }, [placeToggle]);
+
+  useEffect(() => {
+    setAlertProps({...alertProps, cityValue});
+  }, [cityValue]);
 
   const renderBurger = (
     <View style={[s.buttonOuter, {left: 16}]} key={'burger'}>
@@ -321,9 +385,20 @@ const Locations = ({route}) => {
 
   const renderOptions = (
     <View>
+      <Animated.View style={[s.addGpsRoute, {bottom: gpsRouteBtnVal}]}>
+        <Animated.Text style={[s.addText, {opacity: textOpacityVal}]}>
+          GPS route
+        </Animated.Text>
+        <TouchableOpacity
+          style={s.addBtn}
+          activeOpacity={0.8}
+          onPress={() => addOption('GPS route')}>
+          <Image style={s.addImgSmall} source={WalkImg} />
+        </TouchableOpacity>
+      </Animated.View>
       <Animated.View style={[s.addRoute, {bottom: routeBtnVal}]}>
         <Animated.Text style={[s.addText, {opacity: textOpacityVal}]}>
-          Route
+          Draw a route
         </Animated.Text>
         <TouchableOpacity
           style={s.addBtn}
@@ -334,7 +409,7 @@ const Locations = ({route}) => {
       </Animated.View>
       <Animated.View style={[s.addPlace, {bottom: placeBtnVal}]}>
         <Animated.Text style={[s.addText, {opacity: textOpacityVal}]}>
-          Place
+          Add a place
         </Animated.Text>
         <TouchableOpacity
           style={s.addBtn}
@@ -436,6 +511,28 @@ const Locations = ({route}) => {
       </MapboxGL.ShapeSource>
     ) : null;
 
+  const renderGpsRouteDrawer =
+    drawedGpsRouteCoordinates.length !== 0 ? (
+      <MapboxGL.ShapeSource
+        id={generateRandomId()}
+        shape={returnShape('gpsRoute')}>
+        <MapboxGL.LineLayer
+          id={`line=${generateRandomId()}`}
+          style={{
+            lineColor: '#F18303',
+            lineWidth: 3,
+          }}
+        />
+        <MapboxGL.CircleLayer
+          id={`point=${generateRandomId()}`}
+          style={{
+            circleRadius: 7,
+            circleColor: '#F18303',
+          }}
+        />
+      </MapboxGL.ShapeSource>
+    ) : null;
+
   const renderPlaceDrawer = (
     <MapboxGL.ShapeSource id={generateRandomId()} shape={placePoint}>
       <MapboxGL.CircleLayer
@@ -446,6 +543,17 @@ const Locations = ({route}) => {
         }}
       />
     </MapboxGL.ShapeSource>
+  );
+
+  const renderCitySelector = (
+    <CitySelector
+      data={cities}
+      onCityChange={(city) => {
+        setCityValue(city);
+        hideCitySelector();
+      }}
+      hideCitySelector={hideCitySelector}
+    />
   );
 
   return (
@@ -469,13 +577,15 @@ const Locations = ({route}) => {
           followUserLocation={cameraCentering.length !== 0 ? false : true}
         />
         <MapboxGL.UserLocation
-          minDisplacement={10000}
+          // minDisplacement={500}
           onUpdate={(e) => handleUserLocation(e)}
         />
         {routeDrawerActive
           ? renderRouteDrawer
           : placeDrawerActive
           ? renderPlaceDrawer
+          : gpsRouteDrawerActive
+          ? renderGpsRouteDrawer
           : null}
         {renderLocations}
       </MapboxGL.MapView>
@@ -485,6 +595,7 @@ const Locations = ({route}) => {
       {alertVisible ? <Alert {...alertProps} /> : null}
       {popUpVisible ? <PopUp {...popUpProps} /> : null}
       {barVisible ? <Bar {...barProps} hideBarAction={hideBar} /> : null}
+      {citySelectorVisible ? renderCitySelector : null}
     </View>
   );
 };
@@ -602,17 +713,26 @@ const s = StyleSheet.create({
     bottom: 160,
     zIndex: 101,
   },
+  addGpsRoute: {
+    width: 44,
+    height: 44,
+    position: 'absolute',
+    right: 26,
+    bottom: 220,
+    zIndex: 101,
+  },
   addImgSmall: {
     width: 44,
     height: 44,
     resizeMode: 'contain',
   },
   addText: {
-    width: 70,
+    width: 120,
     position: 'absolute',
     top: 10,
-    left: -60,
+    left: -130,
     zIndex: 20,
+    textAlign: 'right',
     fontFamily: 'Gilroy-SemiBold',
     fontSize: 18,
     color: '#fff',

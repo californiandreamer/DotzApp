@@ -44,8 +44,8 @@ const Dialog = ({route}) => {
   const interlocutorId = route.params.id;
   const interlocutorName = route.params.name;
 
-  let initialMessagesList = [];
   const getChatHistory = async () => {
+    let initialMessagesList = [];
     const token = await getAccessToken();
     const headers = await getHeadersWithToken();
     const profile = await getItem('profile');
@@ -81,9 +81,10 @@ const Dialog = ({route}) => {
       const data = e.data;
       const parsedData = JSON.parse(data);
       if (parsedData.hasOwnProperty('message')) {
-        setMessagesList([]);
-        initialMessagesList.push(parsedData);
-        setMessagesList([...initialMessagesList]);
+        getChatHistory();
+        // setMessagesList([]);
+        // initialMessagesList.push(parsedData);
+        // setMessagesList([...initialMessagesList]);
       }
     };
   };
@@ -102,18 +103,33 @@ const Dialog = ({route}) => {
     };
     socket.send(JSON.stringify(obj));
 
-    setMessagesList([
-      ...messagesList,
-      {
-        msg_id: generateMessageId(),
-        author_id: userId,
-        author_name: interlocutorName,
-        message: messageValue,
-        msg_reciever_id: interlocutorId,
-        msg_timestamp_sent: stringedTimeStamp,
-        msg_time_sent: date,
-      },
-    ]);
+    getChatHistory();
+
+    // const sendedMessage = {
+    //   msg_id: generateMessageId(),
+    //   author_id: userId,
+    //   author_name: interlocutorName,
+    //   message: messageValue,
+    //   msg_reciever_id: interlocutorId,
+    //   msg_timestamp_sent: stringedTimeStamp,
+    //   msg_time_sent: date,
+    // };
+
+    // initialMessagesList.push(sendedMessage);
+    // setMessagesList(initialMessagesList);
+
+    // setMessagesList([
+    //   ...messagesList,
+    //   {
+    //     msg_id: generateMessageId(),
+    //     author_id: userId,
+    //     author_name: interlocutorName,
+    //     message: messageValue,
+    //     msg_reciever_id: interlocutorId,
+    //     msg_timestamp_sent: stringedTimeStamp,
+    //     msg_time_sent: date,
+    //   },
+    // ]);
     setMessageValue('');
     scrollingDown();
   };
@@ -214,7 +230,9 @@ const Dialog = ({route}) => {
                         ? s.userTime
                         : s.interlocutorTime,
                     ]}>
-                    {message.msg_time_sent.split(' ')[1]}
+                    {message.msg_time_sent.date
+                      ? message.msg_time_sent.date.split(' ')[1].split('.')[0]
+                      : message.msg_time_sent.split(' ')[1]}
                   </Text>
                 </View>
               </View>

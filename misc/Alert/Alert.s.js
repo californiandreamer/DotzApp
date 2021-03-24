@@ -66,4 +66,19 @@ export default StyleSheet.create({
     fontSize: 18,
     color: '#F0FCFF',
   },
+  citySelectorBtn: {
+    width: '100%',
+    height: 56,
+    padding: 16,
+    marginBottom: 16,
+    backgroundColor: '#212E36',
+    borderWidth: 1,
+    borderColor: '#3A454B',
+    borderRadius: 16,
+  },
+  citySelectorBtnText: {
+    fontSize: 18,
+    fontFamily: 'Gilroy-Regular',
+    color: '#F0FCFF',
+  },
 });

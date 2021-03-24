@@ -12,33 +12,38 @@ const ChooseActivity = () => {
   const navigation = useNavigation();
 
   const [activitiesData, setActivitiesData] = useState([]);
-  const [currentActivity, setCurrentActivity] = useState('4');
+  const [currentActivity, setCurrentActivity] = useState(null);
 
   const stackNavigate = (route) => {
     navigation.navigate(route);
   };
 
   const getActivities = async () => {
-    const request = await axiosGet(activitiesPath);
-    filterUserActivities(request);
-  };
-
-  const filterUserActivities = async (arr) => {
-    let initialActivitiesArr = [];
     const profileData = await getItem('profile');
     const parsedData = JSON.parse(profileData);
-    const activities = parsedData.activities;
 
-    for (let i = 0; i < activities.length; i++) {
-      const activitiesItem = activities[i];
-      const findedActivity = arr.find(
-        (item) => item.activity_id === activitiesItem,
-      );
-      initialActivitiesArr.push(findedActivity);
-    }
-    setActivitiesData(initialActivitiesArr);
+    const request = await axiosGet(activitiesPath);
+    setActivitiesData(request);
     await getProfileActivity(parsedData);
+    // filterUserActivities(request);
   };
+
+  // const filterUserActivities = async (arr) => {
+  //   let initialActivitiesArr = [];
+  //   const profileData = await getItem('profile');
+  //   const parsedData = JSON.parse(profileData);
+  //   const activities = parsedData.activities;
+
+  //   for (let i = 0; i < activities.length; i++) {
+  //     const activitiesItem = activities[i];
+  //     const findedActivity = arr.find(
+  //       (item) => item.activity_id === activitiesItem,
+  //     );
+  //     initialActivitiesArr.push(findedActivity);
+  //   }
+  //   setActivitiesData(initialActivitiesArr);
+  //   await getProfileActivity(parsedData);
+  // };
 
   const getProfileActivity = async (data) => {
     setCurrentActivity(data.profile_current_act);

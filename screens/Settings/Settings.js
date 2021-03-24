@@ -20,6 +20,7 @@ import Selector from '../../misc/Selector/Selector';
 import RegistrationForm from '../../misc/RegistrationForm/RegistrationForm';
 import LoadingGif from '../../assets/icons/loading.gif';
 import CitySelector from '../../misc/CitySelector/CitySelector';
+import Header from '../../misc/Header/Header';
 
 const Settings = ({route}) => {
   const navigation = useNavigation();
@@ -158,6 +159,8 @@ const Settings = ({route}) => {
     }, 500);
   };
 
+  const renderHeader = <Header title={'Settings'} />;
+
   const renderAlert = error.isVisible ? (
     <Alert
       title={error.title}
@@ -216,35 +219,38 @@ const Settings = ({route}) => {
     <Fragment>
       {renderAlert}
       {renderCitySelector}
-      <ScrollView style={s.container}>
-        <View style={s.wrapper}>
+      <ScrollView style={s.outer}>
+        <View style={s.headerWrapper}>{renderHeader}</View>
+        <View style={s.container}>
           <View style={s.wrapper}>
-            <RegistrationForm
-              nameValue={nameValue}
-              cityValue={cityValue}
-              imageUri={imageUri}
-              showCitySelector={showCitySelector}
-              onNameChange={(name) => setNameValue(name)}
-              onImageLoaded={(image) => setUploadedImage(image)}
-            />
-          </View>
-          <View style={s.wrapper}>{renderMap}</View>
-          <View style={s.wrapper}>
-            <Selector
-              toggle={toggle}
-              activities={activitiesData}
-              selectedActivities={selectedActivities}
-              onActivityChange={(activities) =>
-                setSelectedActivities(activities)
-              }
-            />
-          </View>
-          <View style={s.wrapper}>
-            <Button
-              text={'Update'}
-              style={'orange'}
-              action={() => checkInputs()}
-            />
+            <View style={s.wrapper}>
+              <RegistrationForm
+                nameValue={nameValue}
+                cityValue={cityValue}
+                imageUri={imageUri}
+                showCitySelector={showCitySelector}
+                onNameChange={(name) => setNameValue(name)}
+                onImageLoaded={(image) => setUploadedImage(image)}
+              />
+            </View>
+            <View style={s.wrapper}>{renderMap}</View>
+            <View style={s.wrapper}>
+              <Selector
+                toggle={toggle}
+                activities={activitiesData}
+                selectedActivities={selectedActivities}
+                onActivityChange={(activities) =>
+                  setSelectedActivities(activities)
+                }
+              />
+            </View>
+            <View style={s.wrapper}>
+              <Button
+                text={'Update'}
+                style={'orange'}
+                action={() => checkInputs()}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -255,6 +261,11 @@ const Settings = ({route}) => {
 export default Settings;
 
 const s = StyleSheet.create({
+  outer: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#141F25',
+  },
   container: {
     width: '100%',
     height: '100%',
@@ -266,6 +277,10 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  headerWrapper: {
+    // width: '100%',
+    marginBottom: 50,
   },
   map: {
     width: '100%',

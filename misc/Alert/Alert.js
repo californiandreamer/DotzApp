@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import s from './Alert.s';
 import {
   View,
@@ -11,6 +11,8 @@ import {
 import Button from '../Button/Button';
 import NextImg from '../../assets/icons/icon-siguiente.png';
 import CloseImg from '../../assets/icons/ic-close2.png';
+import CitySelector from '../CitySelector/CitySelector';
+import {cities} from '../../data';
 
 const Alert = ({
   title,
@@ -19,9 +21,11 @@ const Alert = ({
   type,
   action1,
   action2,
+  cityValue,
   onType,
   onType2,
   closeAction,
+  showCitySelector,
 }) => {
   const animationVal = useRef(new Animated.Value(-500)).current;
 
@@ -81,15 +85,14 @@ const Alert = ({
                 <Text style={s.text}>{text2}</Text>
               </View>
             ) : null}
-            {onType2 ? (
-              <TextInput
-                style={s.input}
-                onChange={(e) => {
-                  e.persist;
-                  onType2(e.nativeEvent.text);
-                }}
-              />
-            ) : null}
+            {/* {action2 ? ( */}
+            <TouchableOpacity
+              style={s.citySelectorBtn}
+              onPress={action2}
+              activeOpacity={0.8}>
+              <Text style={s.citySelectorBtnText}>{cityValue}</Text>
+            </TouchableOpacity>
+            {/* ) : null} */}
             <Button text={'Next'} style={'orange'} action={action1} />
           </View>
         );

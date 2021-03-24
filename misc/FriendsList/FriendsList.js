@@ -102,6 +102,7 @@ const FriendsList = ({
                   posts: item.profile.posts,
                   currentActivity: item.profile.profile_current_act,
                   image: item.profile.profile_img_ava,
+                  verified: item.profile_verified,
                 })
               }>
               <Text style={s.buttonText}>Profile</Text>
