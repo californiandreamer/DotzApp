@@ -99,10 +99,11 @@ const FriendsList = ({
                   name: item.app_user_name,
                   activities: item.activities,
                   city: item.profile.profile_city,
-                  posts: item.profile.posts,
+                  posts: item.posts,
                   currentActivity: item.profile.profile_current_act,
                   image: item.profile.profile_img_ava,
-                  verified: item.profile_verified,
+                  verified: item.profile.profile_verified,
+                  club: item.profile.profile_club,
                 })
               }>
               <Text style={s.buttonText}>Profile</Text>

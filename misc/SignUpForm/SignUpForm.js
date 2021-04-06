@@ -8,7 +8,7 @@ import Button from '../Button/Button';
 import CheckBoxOnImg from '../../assets/icons/ic-checkOn.png';
 import CheckBoxOffImg from '../../assets/icons/ic-checkOff.png';
 
-const SignUpForm = ({action, onError}) => {
+const SignUpForm = ({action, onShowTerms, onError}) => {
   const [emailValue, setEmailValue] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
   const [checkPasswordValue, setCheckPasswordValue] = useState('');
@@ -129,7 +129,9 @@ const SignUpForm = ({action, onError}) => {
         </TouchableOpacity>
         <Text style={s.termsText}>
           By Signing up, you agree to the DOTZ{' '}
-          <Text style={s.termsBoldText}>Terms of Service</Text>
+          <TouchableOpacity activeOpacity={0.8} onPress={onShowTerms}>
+            <Text style={s.termsBoldText}>Terms of Service</Text>
+          </TouchableOpacity>
         </Text>
       </View>
       <View style={s.wrapper}>

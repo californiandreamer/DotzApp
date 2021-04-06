@@ -8,6 +8,10 @@ import {getAccessToken} from '../../hooks/useAccessToken';
 import {getItem} from '../../hooks/useAsyncStorage';
 import {getHeadersWithToken} from '../../hooks/useApiData';
 import {chatHistoryPath} from '../../api/routes';
+import AdminIcon from '../../assets/icons/ic-admin.png';
+import ModalInfo from '../../misc/ModalInfo/ModalInfo';
+import {adminMessages} from '../../data';
+import CitySelector from '../../misc/CitySelector/CitySelector';
 
 const Messages = () => {
   let initialChatList = [];
@@ -15,6 +19,8 @@ const Messages = () => {
   const [chatList, setChatList] = useState([]);
   // console.log('chatList', chatList);
   const [refreshing, setRefreshing] = useState(false);
+  const [isAdminMessageVisible, setIsAdminMessageVisible] = useState(false);
+  const [socket, setSocket] = useState(null);
 
   const getChatHistory = async () => {
     setRefreshing(true);
@@ -64,6 +70,7 @@ const Messages = () => {
         placeNewMessage(parsedData, usersHistory);
       }
     };
+    setSocket(conn);
   };
 
   const placeNewMessage = (data, history) => {
@@ -76,13 +83,48 @@ const Messages = () => {
     setChatList(initialChatList);
   };
 
+  const sendMessageToAdmin = (text) => {
+    const timeStamp = +new Date();
+    const formatedTimeStamp = timeStamp / 1000;
+    const stringedTimeStamp = JSON.stringify(timeStamp);
+    const date = new Date().toISOString();
+
+    const obj = {
+      msg: text,
+      msg_reciever_id: '3',
+      msg_timestamp_sent: stringedTimeStamp,
+      msg_time_sent: date,
+    };
+    socket.send(JSON.stringify(obj));
+
+    setIsAdminMessageVisible(false);
+  };
+
   useEffect(() => {
     getChatHistory();
   }, []);
 
+  const renderMessageSelector = isAdminMessageVisible ? (
+    <CitySelector
+      data={adminMessages}
+      onCityChange={(text) => sendMessageToAdmin(text)}
+      hideCitySelector={() => setIsAdminMessageVisible(false)}
+    />
+  ) : null;
+
+  const renderHeader = (
+    <Header
+      title={'Messages'}
+      style={'orange'}
+      icon={AdminIcon}
+      action={() => setIsAdminMessageVisible(true)}
+    />
+  );
+
   return (
     <View style={s.container}>
-      <Header title={'Messages'} style={'orange'} />
+      {renderHeader}
+      {renderMessageSelector}
       <View style={s.wrapper}>
         <ChatList
           list={chatList}

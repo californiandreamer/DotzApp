@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import BackgroundImage from '../../assets/images/gradient.jpg';
 import Logo from '../../assets/images/logo.png';
+import {termsAndConditionsData} from '../../data';
 import Alert from '../../misc/Alert/Alert';
+import ModalInfo from '../../misc/ModalInfo/ModalInfo';
 import SignUpForm from '../../misc/SignUpForm/SignUpForm';
 
 const SignUp = () => {
@@ -19,6 +21,7 @@ const SignUp = () => {
     title: '',
     text: '',
   });
+  const [isTermsVisible, setTermsVisible] = useState(false);
 
   const navigation = useNavigation();
 
@@ -41,9 +44,17 @@ const SignUp = () => {
     />
   ) : null;
 
+  const renderTerms = isTermsVisible ? (
+    <ModalInfo
+      data={termsAndConditionsData}
+      hideModal={() => setTermsVisible(false)}
+    />
+  ) : null;
+
   return (
     <ImageBackground style={s.background} source={BackgroundImage}>
       {renderAlert}
+      {renderTerms}
       <ScrollView style={s.container}>
         <Image style={s.logo} source={Logo} />
         <View style={s.wrapper}>
@@ -51,6 +62,7 @@ const SignUp = () => {
         </View>
         <SignUpForm
           action={(route, params) => stackNavigate(route, params)}
+          onShowTerms={() => setTermsVisible(true)}
           onError={(title, text) => {
             setError({isVisible: true, title, text});
           }}

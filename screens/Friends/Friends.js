@@ -17,7 +17,6 @@ const Friends = () => {
   const [friendsList, setFriendsList] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [friendsRequestsList, setFriendsRequestsList] = useState([]);
-  // console.log('friendsRequestsList', friendsRequestsList);
   const [socket, setSocket] = useState(null);
 
   const navigation = useNavigation();
@@ -142,9 +141,7 @@ const Friends = () => {
       <View style={s.wrapper}>
         <FriendsList
           list={
-            listType === 'Teammates requests'
-              ? friendsRequestsList
-              : friendsList
+            listType === 'Teammate requests' ? friendsRequestsList : friendsList
           }
           type={listType}
           refreshing={refreshing}

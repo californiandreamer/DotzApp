@@ -1,5 +1,5 @@
 import React, {Fragment, useEffect, useState} from 'react';
-import {StyleSheet, View, ScrollView} from 'react-native';
+import {StyleSheet, View, ScrollView, Text} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import * as turf from '@turf/turf';
 import MapboxGL from '@react-native-mapbox-gl/maps';
@@ -8,7 +8,9 @@ import {
   defaultLocation,
   errorsContent,
   privacyBubbleData,
+  privacyPolicyData,
   profileUpdatedContent,
+  termsAndConditionsData,
 } from '../../data';
 import {activitiesPath, profileUpdatePath} from '../../api/routes';
 import {getItem} from '../../hooks/useAsyncStorage';
@@ -21,6 +23,8 @@ import RegistrationForm from '../../misc/RegistrationForm/RegistrationForm';
 import LoadingGif from '../../assets/icons/loading.gif';
 import CitySelector from '../../misc/CitySelector/CitySelector';
 import Header from '../../misc/Header/Header';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import ModalInfo from '../../misc/ModalInfo/ModalInfo';
 
 const Settings = ({route}) => {
   const navigation = useNavigation();
@@ -35,7 +39,10 @@ const Settings = ({route}) => {
   const [cityValue, setCityValue] = useState('');
   const [imageUri, setImageUri] = useState('');
   const [citySelectorVisible, setCitySelectorVisible] = useState(false);
+  const [termsVisible, setTermsVisible] = useState(false);
+  const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
   const [uploadedImage, setUploadedImage] = useState(null);
+  console.log('uploadedImage', uploadedImage);
   const [privacyBubble, setPrivacyBubble] = useState(defaultLocation);
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [activitiesData, setActivitiesData] = useState([
@@ -66,7 +73,7 @@ const Settings = ({route}) => {
     setCityValue(parsedData.profile_city);
     setSelectedActivities(parsedData.activities);
     setImageUri(parsedData.profile_img_ava);
-    // setPrivacyBubble(parsedPrivacyBubble);
+    setPrivacyBubble(parsedPrivacyBubble);
     setToggle((prev) => !prev);
   };
 
@@ -111,16 +118,17 @@ const Settings = ({route}) => {
     const stringedCoordinates = JSON.stringify(privacyBubble);
     const stringedActivities = JSON.stringify(selectedActivities);
 
-    let postData = new URLSearchParams();
+    let postData = new FormData();
     postData.append('app_user_name', nameValue);
     postData.append('profile_city', cityValue);
     postData.append('activity_ids', stringedActivities);
     postData.append('profile_privacy_buble', stringedCoordinates);
     if (uploadedImage !== null) {
+      postData.append('update_ava', 'true');
       postData.append('profile_img_ava', {
-        uri: image.uri,
-        name: image.fileName,
-        type: image.type,
+        uri: uploadedImage.uri,
+        name: uploadedImage.fileName,
+        type: uploadedImage.type,
       });
     }
 
@@ -159,6 +167,11 @@ const Settings = ({route}) => {
     }, 500);
   };
 
+  useEffect(() => {
+    getActivities();
+    getProfileData();
+  }, []);
+
   const renderHeader = <Header title={'Settings'} />;
 
   const renderAlert = error.isVisible ? (
@@ -192,7 +205,7 @@ const Settings = ({route}) => {
       <MapboxGL.Camera zoomLevel={12} followUserLocation />
       <MapboxGL.UserLocation
         minDisplacement={100000}
-        onUpdate={(e) => handleUserLocation(e)}
+        // onUpdate={(e) => handleUserLocation(e)}
       />
       <MapboxGL.PointAnnotation id="Point" coordinate={privacyBubble} />
       {renderCircle}
@@ -210,14 +223,25 @@ const Settings = ({route}) => {
     />
   ) : null;
 
-  useEffect(() => {
-    getActivities();
-    getProfileData();
-  }, []);
+  const renderTerms = termsVisible ? (
+    <ModalInfo
+      data={termsAndConditionsData}
+      hideModal={() => setTermsVisible(false)}
+    />
+  ) : null;
+
+  const renderPrivacyPolicy = privacyPolicyVisible ? (
+    <ModalInfo
+      data={privacyPolicyData}
+      hideModal={() => setPrivacyPolicyVisible(false)}
+    />
+  ) : null;
 
   return (
     <Fragment>
       {renderAlert}
+      {renderTerms}
+      {renderPrivacyPolicy}
       {renderCitySelector}
       <ScrollView style={s.outer}>
         <View style={s.headerWrapper}>{renderHeader}</View>
@@ -243,6 +267,22 @@ const Settings = ({route}) => {
                   setSelectedActivities(activities)
                 }
               />
+            </View>
+            <View style={s.wrapper}>
+              <TouchableOpacity
+                style={s.button}
+                activeOpacity={0.8}
+                onPress={() => setPrivacyPolicyVisible(true)}>
+                <Text style={s.buttonText}>Privacy Policy</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={s.wrapper}>
+              <TouchableOpacity
+                style={s.button}
+                activeOpacity={0.8}
+                onPress={() => setTermsVisible(true)}>
+                <Text style={s.buttonText}>Terms and Conditions</Text>
+              </TouchableOpacity>
             </View>
             <View style={s.wrapper}>
               <Button
@@ -279,11 +319,20 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   headerWrapper: {
-    // width: '100%',
     marginBottom: 50,
   },
   map: {
     width: '100%',
     height: 250,
+  },
+  button: {
+    width: '100%',
+    flexDirection: 'row',
+  },
+  buttonText: {
+    width: '100%',
+    fontSize: 18,
+    fontFamily: 'Gilroy-SemiBold',
+    color: '#F0FCFF',
   },
 });

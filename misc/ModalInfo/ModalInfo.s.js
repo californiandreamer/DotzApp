@@ -7,13 +7,14 @@ export default StyleSheet.create({
     left: 0,
     bottom: 0,
     right: 0,
-    zIndex: 100,
+    zIndex: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     paddingHorizontal: 32,
     paddingVertical: 64,
   },
   inner: {
     width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#141F25',
@@ -21,14 +22,9 @@ export default StyleSheet.create({
   },
   scrollBox: {
     width: '100%',
-  },
-  item: {
-    width: '100%',
-    padding: 24,
-    borderBottomColor: '#3A454B',
+    padding: 16,
   },
   text: {
-    width: '100%',
     fontFamily: 'Gilroy-SemiBold',
     fontSize: 18,
     color: '#F0FCFF',

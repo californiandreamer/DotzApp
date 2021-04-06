@@ -267,8 +267,13 @@ const Locations = ({route}) => {
     postData.append('loc_p_cors_all', routes);
 
     const request = await axiosPost(addLocationPath, postData, headers);
-    console.log('res', request);
-    cancelAdding();
+
+    setAlertProps({
+      title: 'Success',
+      text: 'Your location was submitted',
+      type: 'error',
+      closeAction: cancelAdding,
+    });
   };
 
   const addOption = (type) => {
@@ -577,7 +582,7 @@ const Locations = ({route}) => {
           followUserLocation={cameraCentering.length !== 0 ? false : true}
         />
         <MapboxGL.UserLocation
-          // minDisplacement={500}
+          minDisplacement={500}
           onUpdate={(e) => handleUserLocation(e)}
         />
         {routeDrawerActive

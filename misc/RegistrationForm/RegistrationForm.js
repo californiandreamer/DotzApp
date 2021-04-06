@@ -79,6 +79,7 @@ const RegistrationForm = ({
             <Text style={s.title}>City</Text>
             <TouchableOpacity
               style={s.citySelectorBtn}
+              activeOpacity={0.8}
               onPress={showCitySelector}>
               <Text style={s.citySelectorBtnText}>{cityValue}</Text>
             </TouchableOpacity>

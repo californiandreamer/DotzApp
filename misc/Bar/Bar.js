@@ -31,6 +31,7 @@ import {
 } from '../../api/routes';
 import {errorsContent, postAddedContent, postDeleteContent} from '../../data';
 import {getAccessToken} from '../../hooks/useAccessToken';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -45,8 +46,10 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
   const [timerProps, setTimerProps] = useState({
     speed: 0,
     average: 0,
+    distance: 0,
     heading: 'You’re live:',
   });
+  const [distance, setDistance] = useState(0);
   const [startRouteTime, setStartRouteTime] = useState(0);
   const [alertProps, setAlertProps] = useState({});
   const [timeResult, setTimeResult] = useState(null);
@@ -174,7 +177,7 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
     await axiosPost(updateRecordPath, postData, headers);
 
     const obj = {
-      pp_content: `${postInputValue}\nMy last time on ${title}: ${timeResult}`,
+      pp_content: `${postInputValue}\n\nMy last time on ${title}: ${timeResult}`,
       msg_timestamp_sent: stringedTimeStamp,
       post_action: 'addPost',
       type: 'record',
@@ -225,9 +228,17 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
   const handleUserCoordinates = (e) => {
     const longitude = e.coords.longitude;
     const latitude = e.coords.latitude;
+
     setUserLocation([longitude, latitude]);
     if (isRouteStarted) {
       setUsersRouteCoordinates((prev) => [...prev, [longitude, latitude]]);
+    }
+    if (isRouteStarted && usersRouteCoordinates.length > 1) {
+      const distance = calculateByCoordinates(
+        usersRouteCoordinates[usersRouteCoordinates.length - 1],
+        [longitude, latitude],
+      );
+      setDistance((prev) => prev + distance);
     }
   };
 
@@ -463,6 +474,11 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
       <Image style={s.responderImg} source={ResponderImg} />
     </View>
   );
+  // const renderResponder = (
+  //   <TouchableOpacity style={s.responder} {...panHandlers} activeOpacity={1}>
+  //     <Image style={s.responderImg} source={ResponderImg} />
+  //   </TouchableOpacity>
+  // );
 
   const renderAlert = alertProps.isVisible ? <Alert {...alertProps} /> : null;
 
@@ -560,7 +576,7 @@ const Bar = ({id, title, activity, coordinates, records, hideBarAction}) => {
         />
         <MapboxGL.UserLocation
           onUpdate={(e) => {
-            handleUserSpeed(e.coords.speed / 1.36);
+            handleUserSpeed(e.coords.speed * 0.621371192);
             handleUserCoordinates(e);
           }}
         />

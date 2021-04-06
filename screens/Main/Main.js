@@ -11,6 +11,7 @@ import {
 // import * as turf from '@turf/helpers'; // need to remove ?
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import {useNavigation, DrawerActions} from '@react-navigation/native';
+import Geolocation from '@react-native-community/geolocation';
 import {getAccessToken} from '../../hooks/useAccessToken';
 import {getHeadersWithToken} from '../../hooks/useApiData';
 import {mapBoxToken, profileImageUrl, socketUrl} from '../../api/api';
@@ -75,25 +76,52 @@ const Main = ({route}) => {
   };
 
   let initialPinsArr = [];
+  let initialUsersArr = [];
   const connectToSocket = async () => {
     const token = await getAccessToken();
-    // const profile = await getItem('profile');
-    // const parsedProfile = JSON.parse(profile);
-    // const privacyBubble = parsedProfile.profile_privacy_buble;
-    // const parsedPrivacyBubble = JSON.parse(privacyBubble);
-    // const distance = calculateByCoordinates(userLocation, parsedPrivacyBubble);
-    // const distanceInMiles = distance * 1.36;
 
-    const conn = new WebSocket(`${socketUrl}${token}`);
+    let conn = new WebSocket(`${socketUrl}${token}`);
     setSocket(conn);
+
+    Geolocation.getCurrentPosition(async (geolocation) => {
+      const location = [
+        geolocation.coords.longitude,
+        geolocation.coords.latitude,
+      ];
+
+      const profile = await getItem('profile');
+      const parsedProfile = JSON.parse(profile);
+      const privacyBubble = parsedProfile.profile_privacy_buble;
+      const parsedPrivacyBubble = JSON.parse(privacyBubble);
+      const distance = calculateByCoordinates(location, parsedPrivacyBubble);
+      const distanceInMiles = distance * 0.621371192;
+
+      const timeStamp = +new Date();
+      const formatedTimeStamp = timeStamp / 1000;
+      const stringedTimeStamp = JSON.stringify(formatedTimeStamp);
+      const stringedUserLocation = JSON.stringify(location);
+      const obj = {
+        my_cur_loc: stringedUserLocation,
+        msg_timestamp_sent: stringedTimeStamp,
+      };
+      const stringed = JSON.stringify(obj);
+
+      if (distanceInMiles > privacyBubbleData.distance) {
+        conn.onopen = (e) => {
+          conn.send(stringed);
+        };
+      }
+    });
 
     conn.onmessage = (e) => {
       const data = e.data;
       const parsedData = JSON.parse(data);
-      console.log('onmessage', parsedData);
+      // console.log('parsedData', parsedData);
+
       if (parsedData.hasOwnProperty('users')) {
         const users = parsedData.users;
-        setUsersData([...users]);
+        initialUsersArr = users;
+        setUsersData(users);
 
         for (let i = 0; i < users.length; i++) {
           const item = users[i];
@@ -109,15 +137,17 @@ const Main = ({route}) => {
           setBlastPinsData([...initialPinsArr]);
         }
       }
+      if (parsedData.hasOwnProperty('my_cur_loc')) {
+        const newUserLocation = parsedData.my_cur_loc;
+        if (initialUsersArr.length > 0) {
+          let items = [...initialUsersArr];
+          let item = {...items[initialUsersArr.length - 1]};
+          item.my_cur_loc = newUserLocation;
+          items[initialUsersArr.length - 1] = item;
+          setUsersData(items);
+        }
+      }
       if (parsedData.hasOwnProperty('bPin_ev_author')) {
-        // const senderId = parsedData.bPin_ev_author;
-        // const eventId = parsedData.bPin_ev_id;
-        // const findedUser = usersData.find(
-        //   (item) => item.c_user_id === senderId,
-        // );
-        // const findedUserName = findedUser.c_name;
-        // const findedUserImage = findedUser.c_user_profile.profile_img_ava;
-
         if (senderId === userId) {
           setAlertVisible(true);
           setAlertProps({
@@ -126,17 +156,6 @@ const Main = ({route}) => {
             text: 'Your blast pin was posted',
             closeAction: hideAlert,
           });
-
-          // setPopUpVisible(true);
-          // setPopUpProps({
-          //   name: findedUserName,
-          //   image: findedUserImage,
-          //   title: 'Blast Pin',
-          //   type: 'receive',
-          //   text: parsedData.bPin_msg,
-          //   action1: () => confirmBlastPin(eventId),
-          //   closeAction: hidePopUp,
-          // });
         }
       }
       if (parsedData.hasOwnProperty('bPin_ev_joiner')) {
@@ -201,28 +220,38 @@ const Main = ({route}) => {
     };
   };
 
-  const handleUserLocationChanging = async () => {
-    const profile = await getItem('profile');
-    const parsedProfile = JSON.parse(profile);
-    const privacyBubble = parsedProfile.profile_privacy_buble;
-    const parsedPrivacyBubble = JSON.parse(privacyBubble);
-    const distance = calculateByCoordinates(userLocation, parsedPrivacyBubble);
-    const distanceInMiles = distance * 1.36;
+  // const getUserLocation = async () => {
 
-    const timeStamp = +new Date();
-    // const formatedTimeStamp = timeStamp / 1000;
-    const stringedTimeStamp = JSON.stringify(timeStamp);
-    const stringedUserLocation = JSON.stringify(userLocation);
-    const obj = {
-      my_cur_loc: stringedUserLocation,
-      msg_timestamp_sent: stringedTimeStamp,
-    };
-    const stringed = JSON.stringify(obj);
+  // };
 
-    if (distanceInMiles > privacyBubbleData.distance) {
-      socket.send(stringed);
-    }
-  };
+  // const handleUserLocationChanging = async () => {
+  //   const profile = await getItem('profile');
+  //   const parsedProfile = JSON.parse(profile);
+  //   const privacyBubble = parsedProfile.profile_privacy_buble;
+  //   const parsedPrivacyBubble = JSON.parse(privacyBubble);
+  //   const distance = calculateByCoordinates(userLocation, parsedPrivacyBubble);
+  //   const distanceInMiles = distance * 0.621371192;
+
+  //   const timeStamp = +new Date();
+  //   // const formatedTimeStamp = timeStamp / 1000;
+  //   const stringedTimeStamp = JSON.stringify(timeStamp);
+  //   const stringedUserLocation = JSON.stringify(userLocation);
+  //   const obj = {
+  //     my_cur_loc: stringedUserLocation,
+  //     msg_timestamp_sent: stringedTimeStamp,
+  //   };
+  //   const stringed = JSON.stringify(obj);
+  //   // console.log('obj', stringed);
+
+  //   const token = await getAccessToken();
+  //   const conn = new WebSocket(`${socketUrl}${token}`);
+
+  //   conn.onopen = () => {
+  //     if (distanceInMiles > privacyBubbleData.distance) {
+  //       conn.send(stringed);
+  //     }
+  //   };
+  // };
 
   const checkFriendship = (user) => {
     const usersFriends =
@@ -384,9 +413,9 @@ const Main = ({route}) => {
     getActivities();
   }, []);
 
-  useEffect(() => {
-    handleUserLocationChanging();
-  }, [userLocation]);
+  // useEffect(() => {
+  //   handleUserLocationChanging();
+  // }, [userLocation]);
 
   useEffect(() => {
     connectToSocket();
@@ -536,6 +565,7 @@ const Main = ({route}) => {
                     image: user.c_user_profile.profile_img_ava,
                     activities: user.c_user_profile.activities,
                     verified: user.c_user_profile.profile_verified,
+                    club: user.c_user_profile.profile_club,
                   })
                 }>
                 <Image style={s.nextImg} source={NextImg} />
@@ -558,10 +588,10 @@ const Main = ({route}) => {
         onLongPress={() => setActiveUser(null)}>
         <MapboxGL.Camera zoomLevel={12} followUserLocation />
         <MapboxGL.UserLocation
-          minDisplacement={1000}
-          onUpdate={(e) =>
-            setUserLocation([e.coords.longitude, e.coords.latitude])
-          }
+          minDisplacement={10000}
+          // onUpdate={(e) =>
+          //   setUserLocation([e.coords.longitude, e.coords.latitude])
+          // }
         />
         {renderUsers}
         {renderPins}

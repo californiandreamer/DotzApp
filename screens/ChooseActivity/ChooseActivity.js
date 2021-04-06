@@ -60,6 +60,7 @@ const ChooseActivity = () => {
       postData,
       headers,
     );
+    console.log('request', request);
 
     await setItem('current_activity', currentActivity);
     await saveCurrentActivity();

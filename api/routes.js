@@ -4,6 +4,8 @@ export const activitiesImagePath =
 export const profileImagePath =
   'http://admin.officialdotzapp.com/uploads/profiles/';
 
+export const clubImagePath = 'http://admin.officialdotzapp.com/uploads/clubs/';
+
 export const activitiesPath = 'activities?activities=[]';
 
 export const loginPath = 'appuser/login';
@@ -12,7 +14,11 @@ export const registrationPath = 'appuser/register';
 
 export const updateCurrentActivityPath = 'profiles/current_activity';
 
+export const updateClubPath = 'profiles/profile_club';
+
 export const locationsPath = 'locations';
+
+export const clubsPath = 'clubs';
 
 export const chatHistoryPath = 'chat/getChatHistory';
 
