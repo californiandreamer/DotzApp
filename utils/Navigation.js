@@ -6,6 +6,7 @@ import {
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createDrawerNavigator} from '@react-navigation/drawer';
+import Geolocation from '@react-native-community/geolocation';
 import Login from '../screens/Login/Login';
 import SignUp from '../screens/SignUp/SignUp';
 import Registration from '../screens/Registration/Registration';
@@ -29,6 +30,11 @@ import ElipseIcon from '../assets/icons/ellipse.png';
 import LocationIcon from '../assets/icons/ic-Location-menu.png';
 import Settings from '../screens/Settings/Settings';
 import Start from '../screens/Start/Start';
+import {getAccessToken} from '../hooks/useAccessToken';
+import {getItem} from '../hooks/useAsyncStorage';
+import {calculateByCoordinates} from '../hooks/useDistanceCalculator';
+import {socketUrl} from '../api/api';
+import {privacyBubbleData} from '../data';
 
 const Stack = createStackNavigator();
 
@@ -40,6 +46,48 @@ const DrawerNavigator = () => {
     height: 25,
     resizeMode: 'contain',
   };
+
+  const connectToSocket = async () => {
+    const token = await getAccessToken();
+
+    let conn = new WebSocket(`${socketUrl}${token}`);
+    console.log('connectingInNavigator');
+
+    Geolocation.getCurrentPosition(async (geolocation) => {
+      const location = [
+        geolocation.coords.longitude,
+        geolocation.coords.latitude,
+      ];
+
+      const profile = await getItem('profile');
+      const parsedProfile = JSON.parse(profile);
+      const privacyBubble = parsedProfile.profile_privacy_buble;
+      const parsedPrivacyBubble = JSON.parse(privacyBubble);
+      const distance = calculateByCoordinates(location, parsedPrivacyBubble);
+      const distanceInMiles = distance * 0.621371192;
+
+      const timeStamp = +new Date();
+      const formatedTimeStamp = timeStamp / 1000;
+      const stringedTimeStamp = JSON.stringify(formatedTimeStamp);
+      const stringedUserLocation = JSON.stringify(location);
+      const obj = {
+        my_cur_loc: stringedUserLocation,
+        msg_timestamp_sent: stringedTimeStamp,
+      };
+      const stringed = JSON.stringify(obj);
+
+      if (distanceInMiles > privacyBubbleData.distance) {
+        conn.onopen = (e) => {
+          conn.send(stringed);
+          console.log('onopenInNavigator');
+        };
+      }
+    });
+  };
+
+  useEffect(() => {
+    connectToSocket();
+  }, []);
 
   return (
     <Drawer.Navigator

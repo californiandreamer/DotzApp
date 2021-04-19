@@ -83,35 +83,35 @@ const Main = ({route}) => {
     let conn = new WebSocket(`${socketUrl}${token}`);
     setSocket(conn);
 
-    Geolocation.getCurrentPosition(async (geolocation) => {
-      const location = [
-        geolocation.coords.longitude,
-        geolocation.coords.latitude,
-      ];
+    // Geolocation.getCurrentPosition(async (geolocation) => {
+    //   const location = [
+    //     geolocation.coords.longitude,
+    //     geolocation.coords.latitude,
+    //   ];
 
-      const profile = await getItem('profile');
-      const parsedProfile = JSON.parse(profile);
-      const privacyBubble = parsedProfile.profile_privacy_buble;
-      const parsedPrivacyBubble = JSON.parse(privacyBubble);
-      const distance = calculateByCoordinates(location, parsedPrivacyBubble);
-      const distanceInMiles = distance * 0.621371192;
+    //   const profile = await getItem('profile');
+    //   const parsedProfile = JSON.parse(profile);
+    //   const privacyBubble = parsedProfile.profile_privacy_buble;
+    //   const parsedPrivacyBubble = JSON.parse(privacyBubble);
+    //   const distance = calculateByCoordinates(location, parsedPrivacyBubble);
+    //   const distanceInMiles = distance * 0.621371192;
 
-      const timeStamp = +new Date();
-      const formatedTimeStamp = timeStamp / 1000;
-      const stringedTimeStamp = JSON.stringify(formatedTimeStamp);
-      const stringedUserLocation = JSON.stringify(location);
-      const obj = {
-        my_cur_loc: stringedUserLocation,
-        msg_timestamp_sent: stringedTimeStamp,
-      };
-      const stringed = JSON.stringify(obj);
+    //   const timeStamp = +new Date();
+    //   const formatedTimeStamp = timeStamp / 1000;
+    //   const stringedTimeStamp = JSON.stringify(formatedTimeStamp);
+    //   const stringedUserLocation = JSON.stringify(location);
+    //   const obj = {
+    //     my_cur_loc: stringedUserLocation,
+    //     msg_timestamp_sent: stringedTimeStamp,
+    //   };
+    //   const stringed = JSON.stringify(obj);
 
-      if (distanceInMiles > privacyBubbleData.distance) {
-        conn.onopen = (e) => {
-          conn.send(stringed);
-        };
-      }
-    });
+    //   if (distanceInMiles > privacyBubbleData.distance) {
+    //     conn.onopen = (e) => {
+    //       conn.send(stringed);
+    //     };
+    //   }
+    // });
 
     conn.onmessage = (e) => {
       const data = e.data;
@@ -470,6 +470,8 @@ const Main = ({route}) => {
     </View>
   );
 
+  console.log('blastPinCoordinates', blastPinCoordinates);
+
   const renderBlastPin = (
     <MapboxGL.MarkerView
       id={'blastPin'}
@@ -589,9 +591,9 @@ const Main = ({route}) => {
         <MapboxGL.Camera zoomLevel={12} followUserLocation />
         <MapboxGL.UserLocation
           minDisplacement={10000}
-          // onUpdate={(e) =>
-          //   setUserLocation([e.coords.longitude, e.coords.latitude])
-          // }
+          onUpdate={(e) =>
+            setUserLocation([e.coords.longitude, e.coords.latitude])
+          }
         />
         {renderUsers}
         {renderPins}

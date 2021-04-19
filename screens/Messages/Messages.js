@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
 import Header from '../../misc/Header/Header';
 import ChatList from '../../misc/ChatList/ChatList';
 import {socketUrl} from '../../api/api';
@@ -10,8 +11,9 @@ import {getHeadersWithToken} from '../../hooks/useApiData';
 import {chatHistoryPath} from '../../api/routes';
 import AdminIcon from '../../assets/icons/ic-admin.png';
 import ModalInfo from '../../misc/ModalInfo/ModalInfo';
-import {adminMessages} from '../../data';
+import {adminMessages, privacyBubbleData} from '../../data';
 import CitySelector from '../../misc/CitySelector/CitySelector';
+import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
 
 const Messages = () => {
   let initialChatList = [];
@@ -24,7 +26,6 @@ const Messages = () => {
 
   const getChatHistory = async () => {
     setRefreshing(true);
-    const token = await getAccessToken();
     const headers = await getHeadersWithToken();
     const profile = await getItem('profile');
     const parsedProfile = JSON.parse(profile);
@@ -51,13 +52,45 @@ const Messages = () => {
       }
     }
 
-    connectToSocket(token);
     setChatList(initialChatList);
     setRefreshing(false);
   };
 
-  const connectToSocket = async (token) => {
-    const conn = new WebSocket(`${socketUrl}${token}`);
+  const connectToSocket = async () => {
+    const token = await getAccessToken();
+    let conn = new WebSocket(`${socketUrl}${token}`);
+    setSocket(conn);
+
+    Geolocation.getCurrentPosition(async (geolocation) => {
+      const location = [
+        geolocation.coords.longitude,
+        geolocation.coords.latitude,
+      ];
+
+      const profile = await getItem('profile');
+      const parsedProfile = JSON.parse(profile);
+      const privacyBubble = parsedProfile.profile_privacy_buble;
+      const parsedPrivacyBubble = JSON.parse(privacyBubble);
+      const distance = calculateByCoordinates(location, parsedPrivacyBubble);
+      const distanceInMiles = distance * 0.621371192;
+
+      const timeStamp = +new Date();
+      const formatedTimeStamp = timeStamp / 1000;
+      const stringedTimeStamp = JSON.stringify(formatedTimeStamp);
+      const stringedUserLocation = JSON.stringify(location);
+      const obj = {
+        my_cur_loc: stringedUserLocation,
+        msg_timestamp_sent: stringedTimeStamp,
+      };
+      const stringed = JSON.stringify(obj);
+
+      if (distanceInMiles > privacyBubbleData.distance) {
+        conn.onopen = () => {
+          conn.send(stringed);
+        };
+      }
+    });
+
     const headers = await getHeadersWithToken();
     const history = await axiosGet(chatHistoryPath, headers);
     const usersHistory = history[1];
@@ -70,7 +103,6 @@ const Messages = () => {
         placeNewMessage(parsedData, usersHistory);
       }
     };
-    setSocket(conn);
   };
 
   const placeNewMessage = (data, history) => {
@@ -101,6 +133,7 @@ const Messages = () => {
   };
 
   useEffect(() => {
+    connectToSocket();
     getChatHistory();
   }, []);
 

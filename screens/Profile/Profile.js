@@ -71,7 +71,11 @@ const Profile = ({route}) => {
     navigation.navigate(route);
   };
 
-  const checkOwnProfile = () => {
+  const checkOwnProfile = async () => {
+    const token = await getAccessToken();
+    let conn = new WebSocket(`${socketUrl}${token}`);
+    setSocket(conn);
+
     if (route.params !== undefined) {
       setIsOwnProfile(false);
       setProfileData({...route.params});
@@ -126,58 +130,6 @@ const Profile = ({route}) => {
   const getActivities = async (current) => {
     const request = await axiosGet(activitiesPath);
     setActivitiesData(request);
-    // getCurrentActivities(current, request);
-  };
-
-  // const getCurrentActivities = (current, data) => {
-  //   let currentActivitiesArr = [];
-  //   const activities = current;
-
-  //   for (let i = 0; i < data.length; i++) {
-  //     const id = data[i].activity_id;
-  //     const value = activities.includes(id);
-  //     if (value) {
-  //       currentActivitiesArr.push(data[i]);
-  //     }
-  //   }
-
-  //   setActivitiesData(currentActivitiesArr);
-  // };
-
-  const connectToSocket = async () => {
-    const token = await getAccessToken();
-    const conn = new WebSocket(`${socketUrl}${token}`);
-    setSocket(conn);
-
-    // Geolocation.getCurrentPosition(async (geolocation) => {
-    //   const location = [
-    //     geolocation.coords.longitude,
-    //     geolocation.coords.latitude,
-    //   ];
-
-    //   const profile = await getItem('profile');
-    //   const parsedProfile = JSON.parse(profile);
-    //   const privacyBubble = parsedProfile.profile_privacy_buble;
-    //   const parsedPrivacyBubble = JSON.parse(privacyBubble);
-    //   const distance = calculateByCoordinates(location, parsedPrivacyBubble);
-    //   const distanceInMiles = distance * 0.621371192;
-
-    //   const timeStamp = +new Date();
-    //   const formatedTimeStamp = timeStamp / 1000;
-    //   const stringedTimeStamp = JSON.stringify(formatedTimeStamp);
-    //   const stringedUserLocation = JSON.stringify(location);
-    //   const obj = {
-    //     my_cur_loc: stringedUserLocation,
-    //     msg_timestamp_sent: stringedTimeStamp,
-    //   };
-    //   const stringed = JSON.stringify(obj);
-
-    //   if (distanceInMiles > privacyBubbleData.distance) {
-    //     conn.onopen = (e) => {
-    //       conn.send(stringed);
-    //     };
-    //   }
-    // });
   };
 
   const sendFriendshipRequest = async () => {
@@ -242,7 +194,6 @@ const Profile = ({route}) => {
   };
 
   useEffect(() => {
-    connectToSocket();
     checkOwnProfile();
   }, []);
 
@@ -265,12 +216,14 @@ const Profile = ({route}) => {
       />
       <View style={s.rowStartWrapper}>
         <Text style={s.titleCubs}>Clubs</Text>
-        <TouchableOpacity
-          style={s.addBtn}
-          activeOpacity={0.8}
-          onPress={() => setClubsListVisible(true)}>
-          <Image style={s.addBtnImg} source={PlusImg} />
-        </TouchableOpacity>
+        {isOwnProfile ? (
+          <TouchableOpacity
+            style={s.addBtn}
+            activeOpacity={0.8}
+            onPress={() => setClubsListVisible(true)}>
+            <Image style={s.addBtnImg} source={PlusImg} />
+          </TouchableOpacity>
+        ) : null}
       </View>
       <View style={s.clubsRow}>
         <View style={s.clubItem}>

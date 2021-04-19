@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ImageBackground, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import Geolocation from '@react-native-community/geolocation';
 import {socketUrl} from '../../api/api';
 import {addToFriendsPath, chatHistoryPath} from '../../api/routes';
 import {getItem} from '../../hooks/useAsyncStorage';
@@ -11,6 +12,8 @@ import Header from '../../misc/Header/Header';
 import FriendsList from '../../misc/FriendsList/FriendsList';
 import OrangeGradientImg from '../../assets/images/gradient.jpg';
 import NewFriendImg from '../../assets/icons/ic-new-friend.png';
+import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
+import {privacyBubbleData} from '../../data';
 
 const Friends = () => {
   const [listType, setListType] = useState('Teammates');
@@ -61,6 +64,9 @@ const Friends = () => {
     const profileFriendsList = parsedProfile.friends;
     const userId = parsedProfile.app_user_id;
 
+    setFriendsRequestsList([...initialFriendsRequestsList]);
+    setRefreshing(false);
+
     const headers = await getHeadersWithToken();
     const history = await axiosGet(chatHistoryPath, headers);
     const chatHistory = history[0];
@@ -97,15 +103,42 @@ const Friends = () => {
         initialFriendsRequestsList.push(chatItemWithProfile);
       }
     }
-
-    setFriendsRequestsList([...initialFriendsRequestsList]);
-    setRefreshing(false);
   };
 
   const connectToSocket = async () => {
     const token = await getAccessToken();
-    const conn = new WebSocket(`${socketUrl}${token}`);
+    let conn = new WebSocket(`${socketUrl}${token}`);
     setSocket(conn);
+
+    Geolocation.getCurrentPosition(async (geolocation) => {
+      const location = [
+        geolocation.coords.longitude,
+        geolocation.coords.latitude,
+      ];
+
+      const profile = await getItem('profile');
+      const parsedProfile = JSON.parse(profile);
+      const privacyBubble = parsedProfile.profile_privacy_buble;
+      const parsedPrivacyBubble = JSON.parse(privacyBubble);
+      const distance = calculateByCoordinates(location, parsedPrivacyBubble);
+      const distanceInMiles = distance * 0.621371192;
+
+      const timeStamp = +new Date();
+      const formatedTimeStamp = timeStamp / 1000;
+      const stringedTimeStamp = JSON.stringify(formatedTimeStamp);
+      const stringedUserLocation = JSON.stringify(location);
+      const obj = {
+        my_cur_loc: stringedUserLocation,
+        msg_timestamp_sent: stringedTimeStamp,
+      };
+      const stringed = JSON.stringify(obj);
+
+      if (distanceInMiles > privacyBubbleData.distance) {
+        conn.onopen = (e) => {
+          conn.send(stringed);
+        };
+      }
+    });
   };
 
   const approveFrendship = async (id) => {
