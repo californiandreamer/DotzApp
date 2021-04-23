@@ -52,7 +52,7 @@ const FriendsList = ({
             <Text style={s.name}>{item.app_user_name || item.author_name}</Text>
           </View>
           <View style={s.bottomRow}>
-            {type === 'Friends' ? (
+            {type === 'Teammates' ? (
               <TouchableOpacity
                 style={s.chatButton}
                 activeOpacity={0.8}

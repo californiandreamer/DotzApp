@@ -470,8 +470,6 @@ const Main = ({route}) => {
     </View>
   );
 
-  console.log('blastPinCoordinates', blastPinCoordinates);
-
   const renderBlastPin = (
     <MapboxGL.MarkerView
       id={'blastPin'}

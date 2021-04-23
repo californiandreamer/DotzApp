@@ -39,6 +39,7 @@ import {getHeadersWithToken} from '../../hooks/useApiData';
 import CitySelector from '../../misc/CitySelector/CitySelector';
 import ClubSelector from '../../misc/ClubSelector/ClubSelector';
 import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
+import Alert from '../../misc/Alert/Alert';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -56,6 +57,8 @@ const Profile = ({route}) => {
   const [activeClub, setActiveClub] = useState({
     club_name: 'No clubs',
   });
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertProps, setAlertProps] = useState({});
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [activeTab, setActiveTab] = useState(tabProps.tab1);
   const [activitiesData, setActivitiesData] = useState([]);
@@ -144,6 +147,14 @@ const Profile = ({route}) => {
     };
 
     socket.send(JSON.stringify(obj));
+
+    setAlertVisible(true);
+    setAlertProps({
+      type: 'error',
+      title: 'Success',
+      text: 'You’ve sent the friendship request',
+      closeAction: hideAlert,
+    });
   };
 
   const sendPostLikeRequest = (id) => {
@@ -191,6 +202,11 @@ const Profile = ({route}) => {
     postData.append('club_id', id);
     const res = await axiosPost(updateClubPath, postData, headersUrl);
     setClubsListVisible(false);
+  };
+
+  const hideAlert = () => {
+    setAlertVisible(false);
+    setAlertProps({});
   };
 
   useEffect(() => {
@@ -284,6 +300,7 @@ const Profile = ({route}) => {
   return (
     <View style={s.container}>
       {renderClubSelector}
+      {alertVisible ? <Alert {...alertProps} /> : null}
       <ScrollView style={s.scrollBox}>
         <Header
           title={'Profile'}
