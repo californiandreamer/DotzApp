@@ -1,10 +1,10 @@
 export const activitiesImagePath =
-  'http://admin.officialdotzapp.com/uploads/activities/';
+  'https://admin.officialdotzapp.com/uploads/activities/';
 
 export const profileImagePath =
-  'http://admin.officialdotzapp.com/uploads/profiles/';
+  'https://admin.officialdotzapp.com/uploads/profiles/';
 
-export const clubImagePath = 'http://admin.officialdotzapp.com/uploads/clubs/';
+export const clubImagePath = 'https://admin.officialdotzapp.com/uploads/clubs/';
 
 export const activitiesPath = 'activities?activities=[]';
 

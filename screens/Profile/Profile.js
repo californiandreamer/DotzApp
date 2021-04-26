@@ -40,6 +40,7 @@ import CitySelector from '../../misc/CitySelector/CitySelector';
 import ClubSelector from '../../misc/ClubSelector/ClubSelector';
 import {calculateByCoordinates} from '../../hooks/useDistanceCalculator';
 import Alert from '../../misc/Alert/Alert';
+import {privacyBubbleData} from '../../data';
 
 MapboxGL.setAccessToken(mapBoxToken);
 
@@ -77,6 +78,37 @@ const Profile = ({route}) => {
   const checkOwnProfile = async () => {
     const token = await getAccessToken();
     let conn = new WebSocket(`${socketUrl}${token}`);
+
+    Geolocation.getCurrentPosition(async (geolocation) => {
+      const location = [
+        geolocation.coords.longitude,
+        geolocation.coords.latitude,
+      ];
+
+      const profile = await getItem('profile');
+      const parsedProfile = JSON.parse(profile);
+      const privacyBubble = parsedProfile.profile_privacy_buble;
+      const parsedPrivacyBubble = JSON.parse(privacyBubble);
+      const distance = calculateByCoordinates(location, parsedPrivacyBubble);
+      const distanceInMiles = distance * 0.621371192;
+
+      const timeStamp = +new Date();
+      const formatedTimeStamp = timeStamp / 1000;
+      const stringedTimeStamp = JSON.stringify(formatedTimeStamp);
+      const stringedUserLocation = JSON.stringify(location);
+      const obj = {
+        my_cur_loc: stringedUserLocation,
+        msg_timestamp_sent: stringedTimeStamp,
+      };
+      const stringed = JSON.stringify(obj);
+
+      if (distanceInMiles > privacyBubbleData.distance) {
+        conn.onopen = (e) => {
+          conn.send(stringed);
+        };
+      }
+    });
+
     setSocket(conn);
 
     if (route.params !== undefined) {
@@ -96,7 +128,6 @@ const Profile = ({route}) => {
   const getProfileData = async () => {
     const data = await getItem('profile');
     const parsedData = JSON.parse(data);
-    console.log('parsedData', parsedData);
     setCurrentActivity(parsedData.profile_current_act);
     setProfileData({
       id: parsedData.profile_id,

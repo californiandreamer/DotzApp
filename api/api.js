@@ -1,18 +1,15 @@
-import {getAccessToken} from '../hooks/useAccessToken';
-import {getItem} from '../hooks/useAsyncStorage';
-
 export const mapBoxToken =
   'pk.eyJ1Ijoicm9hZHNpZGUiLCJhIjoiY2trbDZleWwzMTdodTJudGQ5NGMzN2hieCJ9.CpLd84FmeqLPRDSTt6m6rw';
 
-export const url = 'http://admin.officialdotzapp.com/api';
+export const url = 'https://admin.officialdotzapp.com/api';
 
-export const socketUrl = 'ws://admin.officialdotzapp.com:8088?access_token=';
+export const socketUrl = 'wss://admin.officialdotzapp.com/wss2/?access_token=';
 
 export const activitiesImageUrl =
-  'http://admin.officialdotzapp.com/uploads/activities/';
+  'https://admin.officialdotzapp.com/uploads/activities/';
 
 export const profileImageUrl =
-  'http://admin.officialdotzapp.com/uploads/profiles/';
+  'https://admin.officialdotzapp.com/uploads/profiles/';
 
 export const clientId = 'ZPwcGbFGFFjMZ34hCM4r4XEyAL8SCL';
 

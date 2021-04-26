@@ -103,6 +103,7 @@ const Friends = () => {
         initialFriendsRequestsList.push(chatItemWithProfile);
       }
     }
+    setFriendsRequestsList([...initialFriendsRequestsList]);
   };
 
   const connectToSocket = async () => {
@@ -149,7 +150,6 @@ const Friends = () => {
     postData.append('profile_rel_status', 'friends');
 
     const req = await axiosPost(addToFriendsPath, postData, headers);
-    console.log('req', req);
   };
 
   useEffect(() => {
